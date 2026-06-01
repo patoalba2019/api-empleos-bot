@@ -1,0 +1,337 @@
+openapi: 3.0.3
+info:
+  title: RemoteJobsAPI
+  version: 2.0.0
+  description: |
+    RemoteJobsAPI provides normalized remote job listings from public job-board
+    feeds. It aggregates multiple sources, cleans and deduplicates listings, and
+    exposes one consistent contract with search, filters, pagination, job detail,
+    stats, source metadata, and cache refresh controls.
+
+    The API is designed for developers, founders, recruitment tools, job boards,
+    dashboards, AI agents, and no-code builders that need fresh remote job data
+    without maintaining multiple source-specific parsers.
+  contact:
+    name: patoalba2019
+    url: https://github.com/patoalba2019/api-empleos-bot
+servers:
+  - url: https://YOUR_DEPLOYED_HOST
+    description: Replace this with the production host connected to RapidAPI.
+tags:
+  - name: Jobs
+    description: Search and retrieve normalized remote job listings.
+  - name: Metadata
+    description: API health, stats, source attribution, and cache information.
+  - name: Admin
+    description: Protected cache refresh controls.
+paths:
+  /:
+    get:
+      tags: [Metadata]
+      summary: API overview
+      description: Returns API status, version, endpoint map, and current cache metadata.
+      responses:
+        "200":
+          description: API overview.
+          content:
+            application/json:
+              schema:
+                type: object
+  /health:
+    get:
+      tags: [Metadata]
+      summary: Health check
+      description: Returns health status and cache metadata.
+      responses:
+        "200":
+          description: Health status.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                  metadata:
+                    $ref: "#/components/schemas/Metadata"
+  /jobs:
+    get:
+      tags: [Jobs]
+      summary: Search remote jobs
+      description: |
+        Returns normalized remote jobs with optional search, filters, sorting,
+        pagination, and full descriptions.
+      parameters:
+        - name: q
+          in: query
+          description: Text search across title, company, location, category, tags, and description.
+          schema:
+            type: string
+          example: python
+        - name: search
+          in: query
+          description: Alias for `q`.
+          schema:
+            type: string
+        - name: company
+          in: query
+          description: Filter by company name.
+          schema:
+            type: string
+          example: Lemon.io
+        - name: location
+          in: query
+          description: Filter by location or candidate region. Accent-insensitive.
+          schema:
+            type: string
+          example: latam
+        - name: category
+          in: query
+          description: Filter by normalized category.
+          schema:
+            type: string
+          example: Software Development
+        - name: tag
+          in: query
+          description: Filter by skill/tag.
+          schema:
+            type: string
+          example: react
+        - name: source
+          in: query
+          description: Filter by source feed.
+          schema:
+            type: string
+            enum: [remotive, remoteok]
+          example: remotive
+        - name: limit
+          in: query
+          description: Page size. Capped by the server `MAX_LIMIT`.
+          schema:
+            type: integer
+            default: 25
+            minimum: 1
+            maximum: 100
+        - name: offset
+          in: query
+          description: Pagination offset.
+          schema:
+            type: integer
+            default: 0
+            minimum: 0
+        - name: sort
+          in: query
+          description: Sort order.
+          schema:
+            type: string
+            enum: [newest, company, title]
+            default: newest
+        - name: include_description
+          in: query
+          description: Include full cleaned job descriptions.
+          schema:
+            type: boolean
+            default: false
+      responses:
+        "200":
+          description: Jobs response.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  metadata:
+                    allOf:
+                      - $ref: "#/components/schemas/Metadata"
+                      - type: object
+                        properties:
+                          total:
+                            type: integer
+                            example: 96
+                          limit:
+                            type: integer
+                            example: 25
+                          offset:
+                            type: integer
+                            example: 0
+                          returned:
+                            type: integer
+                            example: 25
+                  jobs:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Job"
+  /jobs/{job_id}:
+    get:
+      tags: [Jobs]
+      summary: Get job detail
+      description: Returns one job by normalized id, including full cleaned description.
+      parameters:
+        - name: job_id
+          in: path
+          required: true
+          schema:
+            type: string
+          example: 1da66515021e074b
+      responses:
+        "200":
+          description: Job detail.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  job:
+                    $ref: "#/components/schemas/Job"
+        "404":
+          description: Job not found.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /stats:
+    get:
+      tags: [Metadata]
+      summary: Job statistics
+      description: Returns total jobs, source counts, top categories, and top locations.
+      responses:
+        "200":
+          description: Job statistics.
+          content:
+            application/json:
+              schema:
+                type: object
+  /sources:
+    get:
+      tags: [Metadata]
+      summary: Data sources
+      description: Returns source URLs and attribution notes.
+      responses:
+        "200":
+          description: Source metadata.
+          content:
+            application/json:
+              schema:
+                type: object
+  /refresh:
+    post:
+      tags: [Admin]
+      summary: Refresh job cache
+      description: |
+        Manually refreshes the job cache. In production, protect this endpoint
+        with `ADMIN_REFRESH_TOKEN` and pass `Authorization: Bearer <token>`.
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Refresh completed or already running.
+          content:
+            application/json:
+              schema:
+                type: object
+        "401":
+          description: Invalid refresh token.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: Manual refresh disabled.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "503":
+          description: All sources failed.
+          content:
+            application/json:
+              schema:
+                type: object
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+  schemas:
+    Metadata:
+      type: object
+      properties:
+        api:
+          type: string
+          example: RemoteJobsAPI
+        version:
+          type: string
+          example: 2.0.0
+        updated_at:
+          type: string
+          nullable: true
+          example: "2026-06-01T23:36:42+00:00"
+        job_count:
+          type: integer
+          example: 96
+        sources:
+          type: array
+          items:
+            type: string
+          example: [remotive, remoteok]
+        source_errors:
+          type: object
+          additionalProperties:
+            type: string
+        refresh_interval_seconds:
+          type: integer
+          example: 21600
+    Job:
+      type: object
+      properties:
+        id:
+          type: string
+          example: 1da66515021e074b
+        title:
+          type: string
+          example: Senior Python Developer
+        company:
+          type: string
+          example: Lemon.io
+        location:
+          type: string
+          example: Worldwide
+        category:
+          type: string
+          example: Software Development
+        tags:
+          type: array
+          items:
+            type: string
+          example: [python, flask, backend]
+        salary:
+          type: string
+          nullable: true
+          example: "$5000 - $9000"
+        description:
+          type: string
+          description: Present when `include_description=true` or when using `/jobs/{job_id}`.
+        url:
+          type: string
+          format: uri
+          example: https://remotive.com/remote-jobs/software-dev/senior-python
+        source:
+          type: string
+          example: remotive
+        source_domain:
+          type: string
+          example: remotive.com
+        published_at:
+          type: string
+          nullable: true
+          example: "2026-06-01T12:00:00+00:00"
+        remote:
+          type: boolean
+          example: true
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          example: Job not found
