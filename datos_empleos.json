@@ -1,0 +1,66 @@
+[
+    {
+        "id": 8,
+        "titulo": "Data Scientist",
+        "empresa": "RemoteCo",
+        "ubicacion": "Remoto (Europa)",
+        "salario": "$4000 - $12000 USD",
+        "fecha": "Recién agregado"
+    },
+    {
+        "id": 7,
+        "titulo": "Product Manager",
+        "empresa": "MercadoLibre",
+        "ubicacion": "Remoto (EE.UU.)",
+        "salario": "$7000 - $11000 USD",
+        "fecha": "Recién agregado"
+    },
+    {
+        "id": 6,
+        "titulo": "React Developer",
+        "empresa": "Airbnb",
+        "ubicacion": "Remoto (Europa)",
+        "salario": "$2000 - $8000 USD",
+        "fecha": "Recién agregado"
+    },
+    {
+        "id": 5,
+        "titulo": "Product Manager",
+        "empresa": "Supabase",
+        "ubicacion": "Remoto (Latam)",
+        "salario": "$7000 - $11000 USD",
+        "fecha": "Recién agregado"
+    },
+    {
+        "id": 4,
+        "titulo": "React Developer",
+        "empresa": "Globant",
+        "ubicacion": "Remoto (Europa)",
+        "salario": "$2000 - $8000 USD",
+        "fecha": "Recién agregado"
+    },
+    {
+        "id": 1,
+        "titulo": "Senior Python Developer",
+        "empresa": "TechFin Solutions",
+        "ubicacion": "Remoto (EE.UU.)",
+        "salario": "$6,500 - $8,000 USD",
+        "fecha": "Hace 2 horas"
+    },
+    {
+        "id": 2,
+        "titulo": "Data Analyst Bilingüe",
+        "empresa": "MktGlobal Agency",
+        "ubicacion": "Remoto (Latam)",
+        "salario": "$1,800 - $2,500 USD",
+        "fecha": "Hace 4 horas"
+    },
+    {
+        "id": 3,
+        "titulo": "Desarrollador Streamlit/AI",
+        "empresa": "Innovación Municipal",
+        "ubicacion": "Remoto (Argentina)",
+        "salario": "$3,000 USD",
+        "fecha": "Hace 1 día"
+    }
+]
