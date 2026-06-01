@@ -1,36 +1,57 @@
 import os
 import json
-from flask import Flask, jsonify
+from flask import Flask, request, jsonify
 
 app = Flask(__name__)
-DB_FILE = "datos_empleos.json"
 
-def db_leer():
-    if not os.path.exists(DB_FILE):
-        # Si no encuentra el archivo en la nube, arma una lista inicial para que no falle
-        return [
-            {"id": 1, "titulo": "Senior Python Developer", "empresa": "TechFin Solutions", "ubicacion": "Remoto (EE.UU.)", "salario": "$6,500 - $8,000 USD", "fecha": "Hace 2 horas"},
-            {"id": 2, "titulo": "Data Analyst Bilingüe", "empresa": "MktGlobal Agency", "ubicacion": "Remoto (Latam)", "salario": "$1,800 - $2,500 USD", "fecha": "Hace 4 horas"}
-        ]
-    try:
-        with open(DB_FILE, "r", encoding="utf-8") as f:
-            return json.load(f)
-    except:
-        return []
+# Esta es la contraseña secreta para que nadie te hackee la API.
+# Podés cambiar lo que está entre comillas por el texto que quieras.
+API_TOKEN_SECRETO = "MiClaveSecretaSuperSegura2026"
 
-@app.route('/')
+DATABASE_FILE = "datos_empleos.json"
+
+def cargar_empleos_locales():
+    if os.path.exists(DATABASE_FILE):
+        with open(DATABASE_FILE, "r", encoding="utf-8") as f:
+            try:
+                return json.load(f)
+            except json.JSONDecodeError:
+                return []
+    return []
+
+def guardar_empleo_local(nuevo_empleo):
+    empleos = cargar_empleos_locales()
+    empleos.append(nuevo_empleo)
+    with open(DATABASE_FILE, "w", encoding="utf-8") as f:
+        json.dump(empleos, f, indent=4, ensure_ascii=False)
+
+@app.route('/', methods=['GET'])
 def home():
-    return jsonify({"api": "Remote Jobs API", "status": "online", "message": "Bienvenido a la API de Empleos Remotos"})
+    return jsonify({
+        "api": "Remote Jobs API",
+        "message": "Bienvenido a la API de Empleos Remotos",
+        "status": "online"
+    })
 
-@app.route('/jobs', methods=['GET'])
-def get_jobs():
-    return jsonify(db_leer())
-
-@app.route('/stats', methods=['GET'])
-def get_stats():
-    return jsonify({"total_registros": len(db_leer()), "status": "online"})
-
-if __name__ == '__main__':
-    # El servidor en internet usa el puerto automático que le asigne la nube
-    port = int(os.environ.get("PORT", 8000))
-    app.run(host='0.0.0.0', port=port)
+@app.route('/jobs', methods=['POST'])
+def guardar_empleo():
+    # 1. Leemos la contraseña que viaja en los headers
+    token_recibido = request.headers.get("Authorization")
+    
+    # 2. Si no coincide, rebota al intruso con un error 401
+    if not token_recibido or token_recibido != f"Bearer {API_TOKEN_SECRETO}":
+        return jsonify({
+            "status": "error", 
+            "message": "No autorizado. Token inválido o ausente."
+        }), 401
+    
+    # 3. Si está todo OK, guarda los datos del bot
+    datos = request.get_json()
+    if not datos:
+        return jsonify({"status": "error", "message": "No se enviaron datos"}), 400
+        
+    guardar_empleo_local(datos)
+    return jsonify({
+        "status": "success", 
+        "message": "Empleo guardado correctamente de forma segura."
+    })
