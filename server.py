@@ -4,8 +4,10 @@ import threading
 import time
 import requests
 from flask import Flask, request, jsonify
+from flask_cors import CORS  # Importación necesaria
 
 app = Flask(__name__)
+CORS(app)  # Inicialización necesaria para permitir conexiones externas
 
 # Configuración
 API_TOKEN_SECRETO = "MiClaveSecretaSuperSegura2026"
@@ -18,16 +20,16 @@ def inicializar_db():
 
 inicializar_db()
 
-# Esta función busca trabajos (aquí iría tu lógica de scraping)
+# Esta función busca trabajos
 def buscar_empleos():
     print("🚀 Iniciando búsqueda automática de empleos...")
-    # Aquí iría el código que scrapea. Por ahora, un print para probar.
+    # Aquí iría tu lógica de scraping
     print("✅ Búsqueda finalizada y datos guardados.")
 
 def bucle_automatico():
     while True:
         buscar_empleos()
-        time.sleep(21600)  # Espera 6 horas (21600 segundos)
+        time.sleep(21600)  # Espera 6 horas
 
 # Iniciar el hilo de búsqueda en segundo plano
 threading.Thread(target=bucle_automatico, daemon=True).start()
