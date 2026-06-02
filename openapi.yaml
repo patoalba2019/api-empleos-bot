@@ -15,8 +15,8 @@ info:
     name: patoalba2019
     url: https://github.com/patoalba2019/api-empleos-bot
 servers:
-  - url: https://YOUR_DEPLOYED_HOST
-    description: Replace this with the production host connected to RapidAPI.
+  - url: https://api-empleos-bot.onrender.com
+    description: Production backend hosted on Render.
 tags:
   - name: Jobs
     description: Search and retrieve normalized remote job listings.

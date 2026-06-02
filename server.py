@@ -376,6 +376,7 @@ def refresh_jobs() -> dict[str, Any]:
             with cache_lock:
                 metadata = cache["metadata"].copy()
                 metadata["source_errors"] = source_errors
+                cache["metadata"] = metadata
                 return {
                     "status": "failed",
                     "message": "All job sources failed. Serving the last cached snapshot.",
@@ -537,6 +538,12 @@ def get_jobs():
     with cache_lock:
         jobs = list(cache["jobs"])
         metadata = cache["metadata"].copy()
+
+    if not jobs and not metadata.get("updated_at"):
+        refresh_jobs()
+        with cache_lock:
+            jobs = list(cache["jobs"])
+            metadata = cache["metadata"].copy()
 
     filtered = filter_jobs(jobs)
     paginated = filtered[offset : offset + limit]
