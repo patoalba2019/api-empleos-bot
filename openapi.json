@@ -523,5 +523,9 @@
         }
       }
     }
+  },
+  "x-rapidapi-info": {
+    "apiId": "api_be4313c0-e033-4701-9993-7ad8e9e5e5f4",
+    "apiVersionId": "apiversion_15f8f14e-934b-4d42-bdc7-00746c4b590a"
   }
 }
