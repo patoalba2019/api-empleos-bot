@@ -376,7 +376,10 @@ def refresh_jobs() -> dict[str, Any]:
             with cache_lock:
                 metadata = cache["metadata"].copy()
                 metadata["source_errors"] = source_errors
+                metadata["last_refresh_attempt_at"] = now_iso()
+                metadata["last_refresh_status"] = "failed"
                 cache["metadata"] = metadata
+                save_cache({"jobs": cache["jobs"], "metadata": metadata})
                 return {
                     "status": "failed",
                     "message": "All job sources failed. Serving the last cached snapshot.",
@@ -390,6 +393,8 @@ def refresh_jobs() -> dict[str, Any]:
                 "api": APP_NAME,
                 "version": APP_VERSION,
                 "updated_at": now_iso(),
+                "last_refresh_attempt_at": now_iso(),
+                "last_refresh_status": "ok",
                 "job_count": len(jobs),
                 "sources": active_sources,
                 "source_errors": source_errors,
@@ -659,7 +664,7 @@ def should_start_background_thread() -> bool:
 
 load_cache()
 
-if os.environ.get("REFRESH_ON_STARTUP", "true").lower() == "true":
+if os.environ.get("REFRESH_ON_STARTUP", "false").lower() == "true":
     threading.Thread(target=refresh_jobs, daemon=True).start()
 
 if should_start_background_thread():
