@@ -111,13 +111,16 @@ def strip_html(value: Any) -> str:
 
 
 def repair_mojibake(text: str) -> str:
-    if "Ã" not in text and "â" not in text:
+    if not any(marker in text for marker in ("Ã", "â", "Ø", "Ù")):
         return text
-    try:
-        repaired = text.encode("latin1").decode("utf-8")
-    except UnicodeError:
-        return text
-    return repaired if repaired.count("�") <= text.count("�") else text
+    for encoding in ("latin1", "cp1252"):
+        try:
+            repaired = text.encode(encoding).decode("utf-8")
+        except UnicodeError:
+            continue
+        if repaired.count("�") <= text.count("�"):
+            return repaired
+    return text
 
 
 def clean_description(value: Any) -> str:

@@ -71,6 +71,12 @@ class RemoteJobsAPITestCase(unittest.TestCase):
         response = self.client.post("/refresh")
         self.assertEqual(response.status_code, 403)
 
+    def test_repairs_mojibake_in_locations(self):
+        self.assertEqual(
+            self.server.clean_location("Ø§Ù„Ù…Ø¯ÙŠÙ†Ø©"),
+            "المدينة",
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
