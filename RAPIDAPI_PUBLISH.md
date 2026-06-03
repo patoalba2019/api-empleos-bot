@@ -34,7 +34,7 @@ Use it to power job boards, recruiting dashboards, AI agents, no-code automation
 
 ### What you get
 
-- Fresh remote job listings from public feeds
+- Fresh remote job listings from Remote OK and Himalayas
 - Search across title, company, location, category, tags, and description
 - Filters by company, location, category, tag, and source
 - Pagination with `limit` and `offset`
@@ -149,7 +149,8 @@ ENABLE_BACKGROUND_REFRESH=true
 REFRESH_INTERVAL_SECONDS=21600
 MAX_LIMIT=100
 DEFAULT_LIMIT=25
-ENABLED_SOURCES=remotive,remoteok
+ENABLED_SOURCES=remoteok,himalayas
+HIMALAYAS_MAX_PAGES=5
 CORS_ORIGINS=*
 ADMIN_REFRESH_TOKEN=<secure-random-token>
 ```
@@ -169,14 +170,21 @@ and trigger `POST /refresh` from an external scheduler.
 
 ## Monetization
 
-Keep current RapidAPI plan prices unchanged for now.
+Recommended public plans:
 
-Suggested commercial positioning:
+- Basic evaluation: USD 0, 25 requests/month, hard limit.
+- Pro: USD 9.99/month, 10,000 requests/month.
+- Ultra: USD 29/month, 50,000 requests/month.
+- Mega: USD 79/month, 200,000 requests/month.
 
-- Free plan: keep enough requests for developers to test.
-- Paid starter plan: good for hobby apps and small dashboards.
-- Higher plan: reserve for production apps that need larger request volume.
+The Basic plan is a controlled integration test, not a useful free production
+plan. A buyer must be able to verify that the API returns real data before
+paying. Direct backend access remains blocked by the gateway secret.
 
-Review pricing after you see real usage, not before. The first goal is a clean
-listing, reliable endpoint, working examples, and enough free quota for users to
-try it.
+## Required Listing Improvements
+
+- Add a spotlight linking to the public product page.
+- Add one tutorial for building a remote-jobs search page.
+- Add example responses for `/jobs`, `/stats`, and `/sources`.
+- Keep source attribution visible in the listing and in every downstream app.
+- Never describe delayed or cached feeds as real-time.

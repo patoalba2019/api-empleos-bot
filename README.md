@@ -18,19 +18,19 @@ or cache logic themselves.
 
 ## Data Sources
 
-The API currently uses:
+The production configuration currently uses:
 
-- Remotive public API: `https://remotive.com/api/remote-jobs`
 - Remote OK public JSON feed: `https://remoteok.com/api`
+- Himalayas Remote Jobs API: `https://himalayas.app/jobs/api`
 
 Always keep the original `url`, `source`, and `source_domain` fields in consumer
 apps so users can apply through the original job posting.
 
-Before monetizing, review each source's current terms. Remotive's public API asks
-developers to mention Remotive as a source and link back to the job URL. If you
-want to run this as a paid RapidAPI product, the safest setup is to keep source
-attribution visible and disable any source whose terms do not fit your business
-model.
+Both sources require attribution/link-back when their jobs are displayed. The
+API preserves the original application URL and source fields so buyers can meet
+those requirements. Remotive is intentionally not enabled in the commercial
+configuration because its public feed is not the right basis for this paid
+product.
 
 ## Endpoints
 
@@ -55,7 +55,7 @@ Query parameters:
 | `location` | Filter by candidate location text | `latam` |
 | `category` | Filter by normalized category | `software` |
 | `tag` | Filter by tag/skill | `react` |
-| `source` | Filter by source | `remotive` |
+| `source` | Filter by source | `himalayas` |
 | `limit` | Page size, capped by `MAX_LIMIT` | `25` |
 | `offset` | Pagination offset | `50` |
 | `sort` | `newest`, `company`, or `title` | `newest` |
@@ -73,10 +73,10 @@ Response shape:
 {
   "metadata": {
     "api": "RemoteJobsAPI",
-    "version": "2.0.0",
+    "version": "2.1.0",
     "updated_at": "2026-06-01T18:30:00+00:00",
     "job_count": 250,
-    "sources": ["remotive", "remoteok"],
+    "sources": ["remoteok", "himalayas"],
     "total": 12,
     "limit": 10,
     "offset": 0,
@@ -92,7 +92,7 @@ Response shape:
       "tags": ["python", "django", "backend"],
       "salary": "$70000 - $120000",
       "url": "https://example.com/job",
-      "source": "remotive",
+      "source": "himalayas",
       "source_domain": "example.com",
       "published_at": "2026-06-01T12:00:00+00:00",
       "remote": true
@@ -132,11 +132,21 @@ one of:
 | `SOURCE_TIMEOUT_SECONDS` | `15` | Per-source HTTP timeout |
 | `MAX_LIMIT` | `100` | Maximum `GET /jobs` page size |
 | `DEFAULT_LIMIT` | `25` | Default `GET /jobs` page size |
-| `ENABLED_SOURCES` | `remotive,remoteok` | Comma-separated source list |
+| `ENABLED_SOURCES` | `remoteok,himalayas` | Comma-separated source list |
+| `HIMALAYAS_MAX_PAGES` | `5` | Maximum 20-job pages collected per refresh |
 | `REFRESH_ON_STARTUP` | `true` | Start a background refresh on boot |
 | `ENABLE_BACKGROUND_REFRESH` | `true` | Enable scheduled refresh loop |
 | `ADMIN_REFRESH_TOKEN` | unset | Protects `POST /refresh` |
 | `CORS_ORIGINS` | `*` | CORS origin policy |
+| `REQUIRE_PAID_GATEWAY` | `false` | Require an authorized marketplace secret |
+| `PAID_GATEWAY_SECRETS` | unset | Comma-separated marketplace proxy secrets |
+
+## Production Security
+
+The Render Blueprint enables paid-gateway protection. Only `/health` remains
+public for uptime monitoring. Job data and all other endpoints require a private
+marketplace gateway header, so the direct Render URL is not a free customer
+endpoint.
 
 ## Local Development
 
@@ -192,3 +202,11 @@ Suggested tags:
 ```text
 remote jobs, jobs api, hiring, recruitment, developer jobs, latam jobs, work from home, job search
 ```
+
+## Recommended Marketplace Plans
+
+- **Basic evaluation**: USD 0, maximum 25 requests/month, hard limit. This is
+  only enough to verify integration and is not useful as a production plan.
+- **Pro**: USD 9.99/month, 10,000 requests/month.
+- **Ultra**: USD 29/month, 50,000 requests/month.
+- **Mega**: USD 79/month, 200,000 requests/month.

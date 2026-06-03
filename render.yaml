@@ -1,0 +1,32 @@
+services:
+  - type: web
+    name: patoapis-remotejobs-api
+    runtime: python
+    plan: free
+    region: oregon
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn server:app
+    healthCheckPath: /health
+    envVars:
+      - key: REQUIRE_PAID_GATEWAY
+        value: "true"
+      - key: PAID_GATEWAY_SECRETS
+        sync: false
+      - key: ENABLED_SOURCES
+        value: remoteok,himalayas
+      - key: REFRESH_ON_STARTUP
+        value: "true"
+      - key: ENABLE_BACKGROUND_REFRESH
+        value: "false"
+      - key: HIMALAYAS_MAX_PAGES
+        value: "5"
+      - key: REFRESH_INTERVAL_SECONDS
+        value: "21600"
+      - key: SOURCE_TIMEOUT_SECONDS
+        value: "20"
+      - key: DEFAULT_LIMIT
+        value: "25"
+      - key: MAX_LIMIT
+        value: "100"
+      - key: CORS_ORIGINS
+        value: "*"

@@ -1,21 +1,21 @@
 openapi: 3.0.3
 info:
   title: RemoteJobsAPI
-  version: 2.0.0
+  version: 2.1.0
   description: |
-    RemoteJobsAPI provides normalized remote job listings from public job-board
-    feeds. It aggregates multiple sources, cleans and deduplicates listings, and
-    exposes one consistent contract with search, filters, pagination, job detail,
-    stats, source metadata, and cache refresh controls.
+    RemoteJobsAPI provides normalized remote job listings from Remote OK and
+    Himalayas. It cleans and deduplicates source data and exposes one consistent
+    contract with search, filters, pagination, job detail, stats, source
+    metadata, and cache refresh controls.
 
     The API is designed for developers, founders, recruitment tools, job boards,
     dashboards, AI agents, and no-code builders that need fresh remote job data
     without maintaining multiple source-specific parsers.
   contact:
     name: patoalba2019
-    url: https://github.com/patoalba2019/api-empleos-bot
+    url: https://rapidapi.com/patoalba2019/api/remotejobsapi
 servers:
-  - url: https://api-empleos-bot.onrender.com
+  - url: https://patoapis-remotejobs-api.onrender.com
     description: Production backend hosted on Render.
 x-rapidapi-info:
   apiId: api_be4313c0-e033-4701-9993-7ad8e9e5e5f4
@@ -106,8 +106,8 @@ paths:
           description: Filter by source feed.
           schema:
             type: string
-            enum: [remotive, remoteok]
-          example: remotive
+            enum: [remoteok, himalayas]
+          example: himalayas
         - name: limit
           in: query
           description: Page size. Capped by the server `MAX_LIMIT`.
@@ -265,7 +265,7 @@ components:
           example: RemoteJobsAPI
         version:
           type: string
-          example: 2.0.0
+          example: 2.1.0
         updated_at:
           type: string
           nullable: true
@@ -277,7 +277,7 @@ components:
           type: array
           items:
             type: string
-          example: [remotive, remoteok]
+          example: [remoteok, himalayas]
         source_errors:
           type: object
           additionalProperties:
@@ -318,13 +318,13 @@ components:
         url:
           type: string
           format: uri
-          example: https://remotive.com/remote-jobs/software-dev/senior-python
+          example: https://himalayas.app/jobs/senior-python
         source:
           type: string
-          example: remotive
+          example: himalayas
         source_domain:
           type: string
-          example: remotive.com
+          example: himalayas.app
         published_at:
           type: string
           nullable: true

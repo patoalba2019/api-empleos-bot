@@ -16,21 +16,34 @@ from flask import Flask, jsonify, request
 
 
 APP_NAME = "RemoteJobsAPI"
-APP_VERSION = "2.0.0"
+APP_VERSION = "2.1.0"
 DATABASE_FILE = Path(os.environ.get("JOBS_DATABASE_FILE", "datos_empleos.json"))
 REFRESH_INTERVAL_SECONDS = int(os.environ.get("REFRESH_INTERVAL_SECONDS", "21600"))
 REQUEST_TIMEOUT_SECONDS = int(os.environ.get("SOURCE_TIMEOUT_SECONDS", "15"))
 MAX_LIMIT = int(os.environ.get("MAX_LIMIT", "100"))
 DEFAULT_LIMIT = int(os.environ.get("DEFAULT_LIMIT", "25"))
+HIMALAYAS_MAX_PAGES = int(os.environ.get("HIMALAYAS_MAX_PAGES", "5"))
 ENABLED_SOURCES = {
     source.strip().lower()
-    for source in os.environ.get("ENABLED_SOURCES", "remotive,remoteok").split(",")
+    for source in os.environ.get("ENABLED_SOURCES", "remoteok,himalayas").split(",")
     if source.strip()
 }
 USER_AGENT = os.environ.get(
     "SOURCE_USER_AGENT",
-    "RemoteJobsAPI/2.0 (+https://github.com/patoalba2019/api-empleos-bot)",
+    "RemoteJobsAPI/2.1 (+https://rapidapi.com/patoalba2019/api/remotejobsapi)",
 )
+SOURCE_METADATA = {
+    "remoteok": {
+        "url": "https://remoteok.com/api",
+        "website": "https://remoteok.com",
+        "attribution": "Jobs sourced from Remote OK. Keep the original job URL and link back to Remote OK.",
+    },
+    "himalayas": {
+        "url": "https://himalayas.app/jobs/api",
+        "website": "https://himalayas.app",
+        "attribution": "Jobs sourced from Himalayas. Keep the original application link and visibly attribute Himalayas.",
+    },
+}
 
 
 app = Flask(__name__)
@@ -47,7 +60,7 @@ def add_cors_headers(response):
 
 @app.before_request
 def enforce_paid_gateway():
-    if request.method == "OPTIONS":
+    if request.method == "OPTIONS" or request.path == "/health":
         return None
     if os.environ.get("REQUIRE_PAID_GATEWAY", "false").lower() not in {"1", "true", "yes"}:
         return None
@@ -216,17 +229,7 @@ def source_domain(url: str) -> str | None:
 
 
 def normalize_job(raw_job: dict[str, Any], source: str) -> dict[str, Any] | None:
-    if source == "remotive":
-        url = raw_job.get("url") or raw_job.get("job_url") or ""
-        title = strip_html(raw_job.get("title"))
-        company = strip_html(raw_job.get("company_name"))
-        description = clean_description(raw_job.get("description"))
-        tags = as_list(raw_job.get("tags"))
-        category = strip_html(raw_job.get("category"))
-        location = clean_location(raw_job.get("candidate_required_location") or raw_job.get("location"))
-        published_at = parse_timestamp(raw_job.get("publication_date"))
-        salary = strip_html(raw_job.get("salary"))
-    elif source == "remoteok":
+    if source == "remoteok":
         url = raw_job.get("url") or raw_job.get("apply_url") or ""
         title = strip_html(raw_job.get("position") or raw_job.get("title"))
         company = strip_html(raw_job.get("company"))
@@ -235,6 +238,20 @@ def normalize_job(raw_job: dict[str, Any], source: str) -> dict[str, Any] | None
         category = tags[0] if tags else ""
         location = clean_location(raw_job.get("location"))
         published_at = parse_timestamp(raw_job.get("date") or raw_job.get("epoch"))
+        salary = normalize_salary(raw_job)
+    elif source == "himalayas":
+        url = raw_job.get("applicationLink") or ""
+        title = strip_html(raw_job.get("title"))
+        company = strip_html(raw_job.get("companyName"))
+        description = clean_description(raw_job.get("description") or raw_job.get("excerpt"))
+        categories = as_list(raw_job.get("categories"))
+        parent_categories = as_list(raw_job.get("parentCategories"))
+        seniority = as_list(raw_job.get("seniority"))
+        employment_type = strip_html(raw_job.get("employmentType"))
+        tags = as_list(categories + parent_categories + seniority + [employment_type])
+        category = (parent_categories or categories or [employment_type or "Remote"])[0]
+        location = himalayas_location(raw_job.get("locationRestrictions"))
+        published_at = parse_timestamp(raw_job.get("pubDate"))
         salary = normalize_salary(raw_job)
     else:
         return None
@@ -265,15 +282,29 @@ def normalize_salary(raw_job: dict[str, Any]) -> str | None:
     if salary:
         return salary
 
-    minimum = raw_job.get("salary_min")
-    maximum = raw_job.get("salary_max")
+    minimum = raw_job.get("salary_min") or raw_job.get("minSalary")
+    maximum = raw_job.get("salary_max") or raw_job.get("maxSalary")
+    currency = strip_html(raw_job.get("currency")) or "USD"
     if minimum and maximum:
-        return f"${minimum} - ${maximum}"
+        return f"{currency} {minimum} - {maximum}"
     if minimum:
-        return f"From ${minimum}"
+        return f"From {currency} {minimum}"
     if maximum:
-        return f"Up to ${maximum}"
+        return f"Up to {currency} {maximum}"
     return None
+
+
+def himalayas_location(value: Any) -> str:
+    if not isinstance(value, list) or not value:
+        return "Worldwide"
+
+    locations = []
+    for item in value:
+        if isinstance(item, dict):
+            locations.append(item.get("name") or item.get("alpha2") or item.get("slug"))
+        else:
+            locations.append(item)
+    return ", ".join(as_list(locations)) or "Worldwide"
 
 
 def fetch_json(url: str) -> Any:
@@ -288,21 +319,28 @@ def fetch_json(url: str) -> Any:
     return response.json()
 
 
-def fetch_remotive_jobs() -> list[dict[str, Any]]:
-    payload = fetch_json("https://remotive.com/api/remote-jobs")
-    jobs = payload.get("jobs", []) if isinstance(payload, dict) else []
-    return [job for job in (normalize_job(item, "remotive") for item in jobs) if job]
-
-
 def fetch_remoteok_jobs() -> list[dict[str, Any]]:
     payload = fetch_json("https://remoteok.com/api")
     jobs = payload[1:] if isinstance(payload, list) else []
     return [job for job in (normalize_job(item, "remoteok") for item in jobs) if job]
 
 
+def fetch_himalayas_jobs() -> list[dict[str, Any]]:
+    jobs: list[dict[str, Any]] = []
+    limit = 20
+    for page in range(max(1, HIMALAYAS_MAX_PAGES)):
+        offset = page * limit
+        payload = fetch_json(f"https://himalayas.app/jobs/api?offset={offset}&limit={limit}")
+        page_jobs = payload.get("jobs", []) if isinstance(payload, dict) else []
+        jobs.extend(page_jobs)
+        if not page_jobs or offset + limit >= int(payload.get("totalCount", 0)):
+            break
+    return [job for job in (normalize_job(item, "himalayas") for item in jobs) if job]
+
+
 SOURCE_FETCHERS = {
-    "remotive": fetch_remotive_jobs,
     "remoteok": fetch_remoteok_jobs,
+    "himalayas": fetch_himalayas_jobs,
 }
 
 
@@ -434,8 +472,9 @@ def refresh_jobs() -> dict[str, Any]:
                 "source_errors": source_errors,
                 "refresh_interval_seconds": REFRESH_INTERVAL_SECONDS,
                 "attribution": {
-                    "remotive": "https://remotive.com",
-                    "remoteok": "https://remoteok.com",
+                    source: SOURCE_METADATA[source]["website"]
+                    for source in active_sources
+                    if source in SOURCE_METADATA
                 },
             },
         }
@@ -643,15 +682,11 @@ def sources():
         {
             "sources": [
                 {
-                    "name": "remotive",
-                    "url": "https://remotive.com/api/remote-jobs",
-                    "attribution": "Jobs sourced from Remotive. Link back to the job URL.",
-                },
-                {
-                    "name": "remoteok",
-                    "url": "https://remoteok.com/api",
-                    "attribution": "Jobs sourced from Remote OK. Link back to the job URL.",
-                },
+                    "name": name,
+                    **metadata,
+                    "enabled": name in ENABLED_SOURCES,
+                }
+                for name, metadata in SOURCE_METADATA.items()
             ]
         }
     )
@@ -698,7 +733,7 @@ def should_start_background_thread() -> bool:
 
 load_cache()
 
-if os.environ.get("REFRESH_ON_STARTUP", "false").lower() == "true":
+if os.environ.get("REFRESH_ON_STARTUP", "true").lower() == "true":
     threading.Thread(target=refresh_jobs, daemon=True).start()
 
 if should_start_background_thread():

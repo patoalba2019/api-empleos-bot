@@ -2,19 +2,23 @@
   "openapi": "3.0.3",
   "info": {
     "title": "RemoteJobsAPI",
-    "version": "2.0.0",
-    "description": "RemoteJobsAPI provides normalized remote job listings from public job-board\nfeeds. It aggregates multiple sources, cleans and deduplicates listings, and\nexposes one consistent contract with search, filters, pagination, job detail,\nstats, source metadata, and cache refresh controls.\n\nThe API is designed for developers, founders, recruitment tools, job boards,\ndashboards, AI agents, and no-code builders that need fresh remote job data\nwithout maintaining multiple source-specific parsers.\n",
+    "version": "2.1.0",
+    "description": "RemoteJobsAPI provides normalized remote job listings from Remote OK and\nHimalayas. It cleans and deduplicates source data and exposes one consistent\ncontract with search, filters, pagination, job detail, stats, source\nmetadata, and cache refresh controls.\n\nThe API is designed for developers, founders, recruitment tools, job boards,\ndashboards, AI agents, and no-code builders that need fresh remote job data\nwithout maintaining multiple source-specific parsers.\n",
     "contact": {
       "name": "patoalba2019",
-      "url": "https://github.com/patoalba2019/api-empleos-bot"
+      "url": "https://rapidapi.com/patoalba2019/api/remotejobsapi"
     }
   },
   "servers": [
     {
-      "url": "https://api-empleos-bot.onrender.com",
+      "url": "https://patoapis-remotejobs-api.onrender.com",
       "description": "Production backend hosted on Render."
     }
   ],
+  "x-rapidapi-info": {
+    "apiId": "api_be4313c0-e033-4701-9993-7ad8e9e5e5f4",
+    "apiVersionId": "apiversion_15f8f14e-934b-4d42-bdc7-00746c4b590a"
+  },
   "tags": [
     {
       "name": "Jobs",
@@ -149,11 +153,11 @@
             "schema": {
               "type": "string",
               "enum": [
-                "remotive",
-                "remoteok"
+                "remoteok",
+                "himalayas"
               ]
             },
-            "example": "remotive"
+            "example": "himalayas"
           },
           {
             "name": "limit",
@@ -413,7 +417,7 @@
           },
           "version": {
             "type": "string",
-            "example": "2.0.0"
+            "example": "2.1.0"
           },
           "updated_at": {
             "type": "string",
@@ -430,8 +434,8 @@
               "type": "string"
             },
             "example": [
-              "remotive",
-              "remoteok"
+              "remoteok",
+              "himalayas"
             ]
           },
           "source_errors": {
@@ -492,15 +496,15 @@
           "url": {
             "type": "string",
             "format": "uri",
-            "example": "https://remotive.com/remote-jobs/software-dev/senior-python"
+            "example": "https://himalayas.app/jobs/senior-python"
           },
           "source": {
             "type": "string",
-            "example": "remotive"
+            "example": "himalayas"
           },
           "source_domain": {
             "type": "string",
-            "example": "remotive.com"
+            "example": "himalayas.app"
           },
           "published_at": {
             "type": "string",
@@ -523,9 +527,5 @@
         }
       }
     }
-  },
-  "x-rapidapi-info": {
-    "apiId": "api_be4313c0-e033-4701-9993-7ad8e9e5e5f4",
-    "apiVersionId": "apiversion_15f8f14e-934b-4d42-bdc7-00746c4b590a"
   }
 }

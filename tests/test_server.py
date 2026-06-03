@@ -11,6 +11,7 @@ class RemoteJobsAPITestCase(unittest.TestCase):
         os.environ["JOBS_DATABASE_FILE"] = f"{self.temp_dir.name}/jobs.json"
         os.environ["REFRESH_ON_STARTUP"] = "false"
         os.environ["ENABLE_BACKGROUND_REFRESH"] = "false"
+        os.environ["ENABLED_SOURCES"] = "remoteok,himalayas"
 
         import server
 
@@ -22,18 +23,25 @@ class RemoteJobsAPITestCase(unittest.TestCase):
         os.environ.pop("JOBS_DATABASE_FILE", None)
         os.environ.pop("REFRESH_ON_STARTUP", None)
         os.environ.pop("ENABLE_BACKGROUND_REFRESH", None)
+        os.environ.pop("ENABLED_SOURCES", None)
+        os.environ.pop("REQUIRE_PAID_GATEWAY", None)
+        os.environ.pop("PAID_GATEWAY_SECRETS", None)
 
     def test_refresh_normalizes_and_serves_jobs(self):
-        remotive_job = {
+        himalayas_job = {
             "title": "Senior Python Developer",
-            "company_name": "RemoteCo",
-            "candidate_required_location": "LATAM",
-            "category": "Software Development",
-            "tags": ["Python", "Flask"],
-            "salary": "$5000 - $9000",
+            "companyName": "RemoteCo",
+            "locationRestrictions": [{"name": "Argentina", "alpha2": "AR"}],
+            "categories": ["Software Development"],
+            "parentCategories": ["Engineering"],
+            "seniority": ["Senior"],
+            "employmentType": "Full Time",
+            "minSalary": 5000,
+            "maxSalary": 9000,
+            "currency": "USD",
             "description": "<p>Build APIs</p>",
-            "url": "https://remotive.com/remote-jobs/software-dev/senior-python",
-            "publication_date": "2026-06-01T12:00:00Z",
+            "applicationLink": "https://himalayas.app/jobs/senior-python",
+            "pubDate": "2026-06-01T12:00:00Z",
         }
         remoteok_job = {
             "position": "React Engineer",
@@ -48,20 +56,21 @@ class RemoteJobsAPITestCase(unittest.TestCase):
         with patch.dict(
             self.server.SOURCE_FETCHERS,
             {
-                "remotive": lambda: [self.server.normalize_job(remotive_job, "remotive")],
                 "remoteok": lambda: [self.server.normalize_job(remoteok_job, "remoteok")],
+                "himalayas": lambda: [self.server.normalize_job(himalayas_job, "himalayas")],
             },
         ):
             result = self.server.refresh_jobs()
 
         self.assertEqual(result["status"], "ok")
 
-        response = self.client.get("/jobs?q=python&location=latam&include_description=true")
+        response = self.client.get("/jobs?q=python&location=argentina&include_description=true")
         self.assertEqual(response.status_code, 200)
         payload = response.get_json()
         self.assertEqual(payload["metadata"]["total"], 1)
         self.assertEqual(payload["jobs"][0]["company"], "RemoteCo")
         self.assertEqual(payload["jobs"][0]["description"], "Build APIs")
+        self.assertEqual(payload["jobs"][0]["salary"], "USD 5000 - 9000")
 
     def test_job_detail_returns_404_for_unknown_id(self):
         response = self.client.get("/jobs/does-not-exist")
@@ -75,6 +84,17 @@ class RemoteJobsAPITestCase(unittest.TestCase):
         self.assertEqual(
             self.server.clean_location("Ø§Ù„Ù…Ø¯ÙŠÙ†Ø©"),
             "المدينة",
+        )
+
+    def test_paid_gateway_blocks_data_but_keeps_health_public(self):
+        os.environ["REQUIRE_PAID_GATEWAY"] = "true"
+        os.environ["PAID_GATEWAY_SECRETS"] = "market-secret"
+
+        self.assertEqual(self.client.get("/health").status_code, 200)
+        self.assertEqual(self.client.get("/jobs").status_code, 402)
+        self.assertEqual(
+            self.client.get("/jobs", headers={"X-API-Gateway-Secret": "market-secret"}).status_code,
+            200,
         )
 
 
