@@ -142,6 +142,8 @@ requests to a running backend; it does not host the Python app from the repo.
 Recommended production env vars:
 
 ```text
+REQUIRE_PAID_GATEWAY=true
+PAID_GATEWAY_SECRETS=<rapidapi-secret>,<zyla-secret>,<apimarket-secret>,<apyhub-secret>
 REFRESH_ON_STARTUP=true
 ENABLE_BACKGROUND_REFRESH=true
 REFRESH_INTERVAL_SECONDS=21600
@@ -151,6 +153,11 @@ ENABLED_SOURCES=remotive,remoteok
 CORS_ORIGINS=*
 ADMIN_REFRESH_TOKEN=<secure-random-token>
 ```
+
+Configure every paid marketplace gateway to send one of those secrets in a
+private upstream header such as `X-API-Gateway-Secret`,
+`X-RapidAPI-Proxy-Secret`, or `X-RemoteJobsAPI-Secret`. Do not publish the
+Render URL as a customer-facing endpoint.
 
 If your host runs multiple Gunicorn workers, use:
 

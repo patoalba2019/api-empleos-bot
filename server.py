@@ -44,6 +44,37 @@ def add_cors_headers(response):
     response.headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
     return response
 
+
+@app.before_request
+def enforce_paid_gateway():
+    if request.method == "OPTIONS":
+        return None
+    if os.environ.get("REQUIRE_PAID_GATEWAY", "false").lower() not in {"1", "true", "yes"}:
+        return None
+
+    configured = os.environ.get("PAID_GATEWAY_SECRETS") or os.environ.get("PAID_GATEWAY_SECRET")
+    expected = {secret.strip() for secret in (configured or "").split(",") if secret.strip()}
+    if not expected:
+        return jsonify({"error": "Paid gateway is required but not configured."}), 503
+
+    provided = (
+        request.headers.get("X-RapidAPI-Proxy-Secret")
+        or request.headers.get("X-API-Gateway-Secret")
+        or request.headers.get("X-RemoteJobsAPI-Secret")
+    )
+    if provided not in expected:
+        return (
+            jsonify(
+                {
+                    "error": "Access denied. Subscribe through the authorized API marketplace to use this API.",
+                    "marketplace": "RapidAPI",
+                }
+            ),
+            402,
+        )
+    return None
+
+
 cache_lock = threading.RLock()
 refresh_lock = threading.Lock()
 cache: dict[str, Any] = {
