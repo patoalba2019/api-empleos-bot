@@ -62,7 +62,7 @@ def add_cors_headers(response):
 def enforce_paid_gateway():
     if request.method == "OPTIONS" or request.path == "/health":
         return None
-    if os.environ.get("REQUIRE_PAID_GATEWAY", "false").lower() not in {"1", "true", "yes"}:
+    if os.environ.get("REQUIRE_PAID_GATEWAY", "true").lower() not in {"1", "true", "yes"}:
         return None
 
     configured = os.environ.get("PAID_GATEWAY_SECRETS") or os.environ.get("PAID_GATEWAY_SECRET")

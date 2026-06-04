@@ -12,6 +12,7 @@ class RemoteJobsAPITestCase(unittest.TestCase):
         os.environ["REFRESH_ON_STARTUP"] = "false"
         os.environ["ENABLE_BACKGROUND_REFRESH"] = "false"
         os.environ["ENABLED_SOURCES"] = "jobicy,himalayas"
+        os.environ["REQUIRE_PAID_GATEWAY"] = "false"
 
         import server
 

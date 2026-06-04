@@ -142,7 +142,7 @@ one of:
 | `ENABLE_BACKGROUND_REFRESH` | `true` | Enable scheduled refresh loop |
 | `ADMIN_REFRESH_TOKEN` | unset | Protects `POST /refresh` |
 | `CORS_ORIGINS` | `*` | CORS origin policy |
-| `REQUIRE_PAID_GATEWAY` | `false` | Require an authorized marketplace secret |
+| `REQUIRE_PAID_GATEWAY` | `true` | Require an authorized marketplace secret |
 | `PAID_GATEWAY_SECRETS` | unset | Comma-separated marketplace proxy secrets |
 
 ## Production Security
@@ -151,6 +151,8 @@ The Render Blueprint enables paid-gateway protection. Only `/health` remains
 public for uptime monitoring. Job data and all other endpoints require a private
 marketplace gateway header, so the direct Render URL is not a free customer
 endpoint.
+
+For local development only, explicitly set `REQUIRE_PAID_GATEWAY=false`.
 
 ## Local Development
 
