@@ -2,6 +2,13 @@
 
 ![RemoteJobsAPI logo](assets/remotejobs-api-logo-500.png)
 
+[Subscribe on RapidAPI](https://rapidapi.com/patoalba2019/api/remotejobsapi?utm_source=github&utm_medium=repository&utm_campaign=remotejobs_readme) |
+[View product details](https://patoapis-paid-apis.onrender.com/remote-jobs-api.html?utm_source=github&utm_medium=repository&utm_campaign=remotejobs_readme)
+
+> Commercial API access is paid and delivered through RapidAPI. The direct
+> production backend rejects requests that do not carry the private marketplace
+> gateway credential.
+
 RemoteJobsAPI is a production-ready Flask API that aggregates remote job listings
 from public job-board feeds and exposes them through one clean, normalized
 contract. It is designed for RapidAPI consumers who want fresh remote jobs
@@ -230,3 +237,4 @@ remote jobs, jobs api, hiring, recruitment, developer jobs, latam jobs, work fro
 ## License
 
 Proprietary software. All rights reserved. See [LICENSE](LICENSE).
+Access to the hosted API requires an active paid RapidAPI subscription.
