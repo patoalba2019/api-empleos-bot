@@ -1,5 +1,7 @@
 # RemoteJobsAPI
 
+![RemoteJobsAPI logo](assets/remotejobs-api-logo-500.png)
+
 RemoteJobsAPI is a production-ready Flask API that aggregates remote job listings
 from public job-board feeds and exposes them through one clean, normalized
 contract. It is designed for RapidAPI consumers who want fresh remote jobs
@@ -179,6 +181,12 @@ patterns:
 - Or run a single worker for this small API and keep background refresh enabled.
 
 ## RapidAPI Listing Copy
+
+Marketplace logo:
+
+```text
+assets/remotejobs-api-logo-500.png
+```
 
 Short description:
 

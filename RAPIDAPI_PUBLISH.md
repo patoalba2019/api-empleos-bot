@@ -11,6 +11,12 @@ API name:
 RemoteJobsAPI
 ```
 
+Logo:
+
+```text
+assets/remotejobs-api-logo-500.png
+```
+
 Category:
 
 ```text
