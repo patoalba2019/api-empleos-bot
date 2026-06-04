@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: RemoteJobsAPI
-  version: 2.1.0
+  version: 2.2.0
   description: |
     RemoteJobsAPI provides normalized remote job listings from Jobicy and
     Himalayas. It cleans and deduplicates source data and exposes one consistent
@@ -265,7 +265,7 @@ components:
           example: RemoteJobsAPI
         version:
           type: string
-          example: 2.1.0
+          example: 2.2.0
         updated_at:
           type: string
           nullable: true
@@ -285,6 +285,9 @@ components:
         refresh_interval_seconds:
           type: integer
           example: 43200
+        failure_retry_seconds:
+          type: integer
+          example: 900
     Job:
       type: object
       properties:

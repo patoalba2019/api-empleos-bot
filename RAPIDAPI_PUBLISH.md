@@ -166,26 +166,21 @@ private upstream header such as `X-API-Gateway-Secret`,
 `X-RapidAPI-Proxy-Secret`, or `X-RemoteJobsAPI-Secret`. Do not publish the
 Render URL as a customer-facing endpoint.
 
-If your host runs multiple Gunicorn workers, use:
-
-```text
-ENABLE_BACKGROUND_REFRESH=false
-```
-
-and trigger `POST /refresh` from an external scheduler.
+The production Blueprint keeps background loops disabled. Health and read
+requests refresh stale snapshots automatically while preserving the last
+successful snapshot during temporary source outages.
 
 ## Monetization
 
 Recommended public plans:
 
-- Basic evaluation: USD 0, 25 requests/month, hard limit.
+- Starter: USD 4.99/month, 1,000 requests/month.
 - Pro: USD 9.99/month, 10,000 requests/month.
 - Ultra: USD 29/month, 50,000 requests/month.
 - Mega: USD 79/month, 200,000 requests/month.
 
-The Basic plan is a controlled integration test, not a useful free production
-plan. A buyer must be able to verify that the API returns real data before
-paying. Direct backend access remains blocked by the gateway secret.
+Every plan is paid. Buyers can verify real responses through the low-cost
+Starter plan. Direct backend access remains blocked by the gateway secret.
 
 ## Required Listing Improvements
 

@@ -2,7 +2,7 @@
   "openapi": "3.0.3",
   "info": {
     "title": "RemoteJobsAPI",
-    "version": "2.1.0",
+    "version": "2.2.0",
     "description": "RemoteJobsAPI provides normalized remote job listings from Jobicy and\nHimalayas. It cleans and deduplicates source data and exposes one consistent\ncontract with search, filters, pagination, job detail, stats, source\nmetadata, and cache refresh controls.\n\nThe API is designed for developers, founders, recruitment tools, job boards,\ndashboards, AI agents, and no-code builders that need fresh remote job data\nwithout maintaining multiple source-specific parsers.\n",
     "contact": {
       "name": "patoalba2019",
@@ -352,7 +352,9 @@
         "description": "Manually refreshes the job cache. In production, protect this endpoint\nwith `ADMIN_REFRESH_TOKEN` and pass `Authorization: Bearer <token>`.\n",
         "security": [
           {
-            "bearerAuth": []
+            "bearerAuth": [
+
+            ]
           }
         ],
         "responses": {
@@ -417,7 +419,7 @@
           },
           "version": {
             "type": "string",
-            "example": "2.1.0"
+            "example": "2.2.0"
           },
           "updated_at": {
             "type": "string",
@@ -447,6 +449,10 @@
           "refresh_interval_seconds": {
             "type": "integer",
             "example": 43200
+          },
+          "failure_retry_seconds": {
+            "type": "integer",
+            "example": 900
           }
         }
       },

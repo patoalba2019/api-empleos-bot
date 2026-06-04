@@ -77,7 +77,7 @@ Response shape:
 {
   "metadata": {
     "api": "RemoteJobsAPI",
-    "version": "2.1.0",
+    "version": "2.2.0",
     "updated_at": "2026-06-01T18:30:00+00:00",
     "job_count": 250,
     "sources": ["jobicy", "himalayas"],
@@ -132,7 +132,8 @@ one of:
 | --- | --- | --- |
 | `PORT` | `5000` | Server port |
 | `JOBS_DATABASE_FILE` | `datos_empleos.json` | Persistent cache path |
-| `REFRESH_INTERVAL_SECONDS` | `43200` | Background refresh interval |
+| `REFRESH_INTERVAL_SECONDS` | `43200` | Successful snapshot refresh interval |
+| `FAILURE_RETRY_SECONDS` | `900` | Retry interval after all sources fail |
 | `SOURCE_TIMEOUT_SECONDS` | `15` | Per-source HTTP timeout |
 | `MAX_LIMIT` | `100` | Maximum `GET /jobs` page size |
 | `DEFAULT_LIMIT` | `25` | Default `GET /jobs` page size |
@@ -177,12 +178,10 @@ Recommended start command:
 gunicorn server:app
 ```
 
-If your hosting provider runs multiple Gunicorn workers, use one of these
-patterns:
-
-- Keep `REFRESH_ON_STARTUP=true` and `ENABLE_BACKGROUND_REFRESH=false`, then call
-  `POST /refresh` from an external scheduler every 6 hours.
-- Or run a single worker for this small API and keep background refresh enabled.
+The production Blueprint keeps background loops disabled. `/health` and
+job-reading endpoints refresh a successful snapshot after 12 hours, retry a
+failed refresh after 15 minutes, and continue serving the last successful
+snapshot during temporary source outages.
 
 ## RapidAPI Listing Copy
 
@@ -217,8 +216,7 @@ remote jobs, jobs api, hiring, recruitment, developer jobs, latam jobs, work fro
 
 ## Recommended Marketplace Plans
 
-- **Basic evaluation**: USD 0, maximum 25 requests/month, hard limit. This is
-  only enough to verify integration and is not useful as a production plan.
+- **Starter**: USD 4.99/month, 1,000 requests/month.
 - **Pro**: USD 9.99/month, 10,000 requests/month.
 - **Ultra**: USD 29/month, 50,000 requests/month.
 - **Mega**: USD 79/month, 200,000 requests/month.

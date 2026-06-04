@@ -1,4 +1,5 @@
 import hashlib
+import hmac
 import html
 import json
 import os
@@ -16,9 +17,10 @@ from flask import Flask, jsonify, request
 
 
 APP_NAME = "RemoteJobsAPI"
-APP_VERSION = "2.1.0"
+APP_VERSION = "2.2.0"
 DATABASE_FILE = Path(os.environ.get("JOBS_DATABASE_FILE", "datos_empleos.json"))
 REFRESH_INTERVAL_SECONDS = int(os.environ.get("REFRESH_INTERVAL_SECONDS", "43200"))
+FAILURE_RETRY_SECONDS = int(os.environ.get("FAILURE_RETRY_SECONDS", "900"))
 REQUEST_TIMEOUT_SECONDS = int(os.environ.get("SOURCE_TIMEOUT_SECONDS", "15"))
 MAX_LIMIT = int(os.environ.get("MAX_LIMIT", "100"))
 DEFAULT_LIMIT = int(os.environ.get("DEFAULT_LIMIT", "25"))
@@ -30,7 +32,7 @@ ENABLED_SOURCES = {
 }
 USER_AGENT = os.environ.get(
     "SOURCE_USER_AGENT",
-    "RemoteJobsAPI/2.1 (+https://rapidapi.com/patoalba2019/api/remotejobsapi)",
+    "RemoteJobsAPI/2.2 (+https://rapidapi.com/patoalba2019/api/remotejobsapi)",
 )
 SOURCE_METADATA = {
     "jobicy": {
@@ -55,6 +57,8 @@ def add_cors_headers(response):
     response.headers["Access-Control-Allow-Origin"] = CORS_ORIGINS
     response.headers["Access-Control-Allow-Headers"] = "Authorization, Content-Type"
     response.headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
+    response.headers["Cache-Control"] = "private, no-store"
+    response.headers["X-Content-Type-Options"] = "nosniff"
     return response
 
 
@@ -66,7 +70,7 @@ def enforce_paid_gateway():
         return None
 
     configured = os.environ.get("PAID_GATEWAY_SECRETS") or os.environ.get("PAID_GATEWAY_SECRET")
-    expected = {secret.strip() for secret in (configured or "").split(",") if secret.strip()}
+    expected = [secret.strip() for secret in (configured or "").split(",") if secret.strip()]
     if not expected:
         return jsonify({"error": "Paid gateway is required but not configured."}), 503
 
@@ -74,8 +78,9 @@ def enforce_paid_gateway():
         request.headers.get("X-RapidAPI-Proxy-Secret")
         or request.headers.get("X-API-Gateway-Secret")
         or request.headers.get("X-RemoteJobsAPI-Secret")
+        or ""
     )
-    if provided not in expected:
+    if not any(hmac.compare_digest(provided, secret) for secret in expected):
         return (
             jsonify(
                 {
@@ -217,7 +222,7 @@ def as_list(value: Any) -> list[str]:
 
 def stable_id(source: str, url: str, title: str, company: str) -> str:
     key = f"{source}|{url}|{title}|{company}".lower().encode("utf-8")
-    return hashlib.sha1(key).hexdigest()[:16]
+    return hashlib.sha256(key).hexdigest()[:16]
 
 
 def source_domain(url: str) -> str | None:
@@ -474,6 +479,7 @@ def refresh_jobs() -> dict[str, Any]:
                 "sources": active_sources,
                 "source_errors": source_errors,
                 "refresh_interval_seconds": REFRESH_INTERVAL_SECONDS,
+                "failure_retry_seconds": FAILURE_RETRY_SECONDS,
                 "attribution": {
                     source: SOURCE_METADATA[source]["website"]
                     for source in active_sources
@@ -497,10 +503,27 @@ def background_refresh_loop() -> None:
         time.sleep(REFRESH_INTERVAL_SECONDS)
 
 
-def ensure_initial_snapshot() -> None:
+def seconds_since(value: Any) -> float:
+    normalized = parse_timestamp(value)
+    if not normalized:
+        return float("inf")
+    parsed = datetime.fromisoformat(normalized)
+    return max(0.0, (datetime.now(timezone.utc) - parsed).total_seconds())
+
+
+def snapshot_refresh_due() -> bool:
     with cache_lock:
-        should_refresh = not cache["jobs"] and not cache["metadata"].get("last_refresh_attempt_at")
-    if should_refresh:
+        metadata = cache["metadata"].copy()
+    retry_after = (
+        FAILURE_RETRY_SECONDS
+        if metadata.get("last_refresh_status") == "failed"
+        else REFRESH_INTERVAL_SECONDS
+    )
+    return seconds_since(metadata.get("last_refresh_attempt_at")) >= retry_after
+
+
+def ensure_fresh_snapshot() -> None:
+    if snapshot_refresh_due():
         refresh_jobs()
 
 
@@ -589,6 +612,7 @@ def public_job(job: dict[str, Any], include_description: bool = False) -> dict[s
 
 @app.get("/")
 def home():
+    ensure_fresh_snapshot()
     with cache_lock:
         metadata = cache["metadata"].copy()
 
@@ -612,7 +636,7 @@ def home():
 
 @app.get("/health")
 def health():
-    ensure_initial_snapshot()
+    ensure_fresh_snapshot()
     with cache_lock:
         metadata = cache["metadata"].copy()
     status = "ok" if metadata.get("job_count", 0) > 0 else "degraded"
@@ -621,18 +645,13 @@ def health():
 
 @app.get("/jobs")
 def get_jobs():
+    ensure_fresh_snapshot()
     limit, offset = parse_limit()
     include_description = query_bool("include_description", False)
 
     with cache_lock:
         jobs = list(cache["jobs"])
         metadata = cache["metadata"].copy()
-
-    if not jobs and not metadata.get("last_refresh_attempt_at"):
-        ensure_initial_snapshot()
-        with cache_lock:
-            jobs = list(cache["jobs"])
-            metadata = cache["metadata"].copy()
 
     filtered = filter_jobs(jobs)
     paginated = filtered[offset : offset + limit]
@@ -653,6 +672,7 @@ def get_jobs():
 
 @app.get("/jobs/<job_id>")
 def get_job(job_id: str):
+    ensure_fresh_snapshot()
     with cache_lock:
         jobs = list(cache["jobs"])
 
@@ -664,6 +684,7 @@ def get_job(job_id: str):
 
 @app.get("/stats")
 def stats():
+    ensure_fresh_snapshot()
     with cache_lock:
         jobs = list(cache["jobs"])
         metadata = cache["metadata"].copy()
@@ -709,7 +730,7 @@ def refresh():
     provided_token = request.headers.get("Authorization", "").replace("Bearer ", "").strip()
     public_refresh_enabled = os.environ.get("ALLOW_PUBLIC_REFRESH", "").lower() == "true"
 
-    if configured_token and provided_token != configured_token:
+    if configured_token and not hmac.compare_digest(provided_token, configured_token):
         return jsonify({"error": "Invalid refresh token"}), 401
     if not configured_token and not public_refresh_enabled:
         return (
@@ -752,4 +773,4 @@ if should_start_background_thread():
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
+    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))  # nosec B104

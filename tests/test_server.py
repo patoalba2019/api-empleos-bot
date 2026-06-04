@@ -4,6 +4,8 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
+import requests
+
 
 class RemoteJobsAPITestCase(unittest.TestCase):
     def setUp(self):
@@ -18,6 +20,8 @@ class RemoteJobsAPITestCase(unittest.TestCase):
 
         self.server = importlib.reload(server)
         self.client = self.server.app.test_client()
+        with self.server.cache_lock:
+            self.server.cache["metadata"]["last_refresh_attempt_at"] = self.server.now_iso()
 
     def tearDown(self):
         self.temp_dir.cleanup()
@@ -27,6 +31,7 @@ class RemoteJobsAPITestCase(unittest.TestCase):
         os.environ.pop("ENABLED_SOURCES", None)
         os.environ.pop("REQUIRE_PAID_GATEWAY", None)
         os.environ.pop("PAID_GATEWAY_SECRETS", None)
+        os.environ.pop("PAID_GATEWAY_SECRET", None)
 
     def test_refresh_normalizes_and_serves_jobs(self):
         himalayas_job = {
@@ -104,23 +109,60 @@ class RemoteJobsAPITestCase(unittest.TestCase):
             self.server.SOURCE_FETCHERS,
             {"jobicy": lambda: [jobicy_job], "himalayas": lambda: []},
         ):
+            with self.server.cache_lock:
+                self.server.cache["metadata"]["last_refresh_attempt_at"] = None
             response = self.client.get("/health")
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.get_json()["metadata"]["job_count"], 1)
 
+    def test_failed_refresh_keeps_last_successful_snapshot(self):
+        job = self.server.normalize_job(
+            {
+                "jobTitle": "Backend Engineer",
+                "companyName": "Example",
+                "jobGeo": "Worldwide",
+                "url": "https://jobicy.com/jobs/backend-engineer",
+                "pubDate": "2026-06-01T12:00:00Z",
+            },
+            "jobicy",
+        )
+        with patch.dict(
+            self.server.SOURCE_FETCHERS,
+            {"jobicy": lambda: [job], "himalayas": lambda: []},
+        ):
+            self.assertEqual(self.server.refresh_jobs()["status"], "ok")
+
+        def fail():
+            raise requests.RequestException("temporary outage")
+
+        with patch.dict(self.server.SOURCE_FETCHERS, {"jobicy": fail, "himalayas": fail}):
+            self.assertEqual(self.server.refresh_jobs()["status"], "failed")
+
+        response = self.client.get("/jobs")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.get_json()["metadata"]["total"], 1)
+
     def test_paid_gateway_blocks_data_but_keeps_health_public(self):
         os.environ["REQUIRE_PAID_GATEWAY"] = "true"
-        os.environ["PAID_GATEWAY_SECRETS"] = "market-secret"
+        os.environ["PAID_GATEWAY_SECRETS"] = "rapidapi-secret,other-market-secret"
         with self.server.cache_lock:
-            self.server.cache["metadata"]["last_refresh_attempt_at"] = "test"
+            self.server.cache["metadata"]["last_refresh_attempt_at"] = self.server.now_iso()
 
         self.assertEqual(self.client.get("/health").status_code, 200)
         self.assertEqual(self.client.get("/jobs").status_code, 402)
         self.assertEqual(
-            self.client.get("/jobs", headers={"X-API-Gateway-Secret": "market-secret"}).status_code,
+            self.client.get("/jobs", headers={"X-API-Gateway-Secret": "other-market-secret"}).status_code,
             200,
         )
+
+    def test_paid_gateway_fails_closed_by_default(self):
+        os.environ.pop("REQUIRE_PAID_GATEWAY", None)
+        os.environ.pop("PAID_GATEWAY_SECRETS", None)
+        with self.server.cache_lock:
+            self.server.cache["metadata"]["last_refresh_attempt_at"] = self.server.now_iso()
+        self.assertEqual(self.client.get("/health").status_code, 200)
+        self.assertEqual(self.client.get("/jobs").status_code, 503)
 
 
 if __name__ == "__main__":
