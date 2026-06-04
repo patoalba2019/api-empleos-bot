@@ -18,14 +18,14 @@ from flask import Flask, jsonify, request
 APP_NAME = "RemoteJobsAPI"
 APP_VERSION = "2.1.0"
 DATABASE_FILE = Path(os.environ.get("JOBS_DATABASE_FILE", "datos_empleos.json"))
-REFRESH_INTERVAL_SECONDS = int(os.environ.get("REFRESH_INTERVAL_SECONDS", "21600"))
+REFRESH_INTERVAL_SECONDS = int(os.environ.get("REFRESH_INTERVAL_SECONDS", "43200"))
 REQUEST_TIMEOUT_SECONDS = int(os.environ.get("SOURCE_TIMEOUT_SECONDS", "15"))
 MAX_LIMIT = int(os.environ.get("MAX_LIMIT", "100"))
 DEFAULT_LIMIT = int(os.environ.get("DEFAULT_LIMIT", "25"))
 HIMALAYAS_MAX_PAGES = int(os.environ.get("HIMALAYAS_MAX_PAGES", "5"))
 ENABLED_SOURCES = {
     source.strip().lower()
-    for source in os.environ.get("ENABLED_SOURCES", "remoteok,himalayas").split(",")
+    for source in os.environ.get("ENABLED_SOURCES", "jobicy,himalayas").split(",")
     if source.strip()
 }
 USER_AGENT = os.environ.get(
@@ -33,10 +33,10 @@ USER_AGENT = os.environ.get(
     "RemoteJobsAPI/2.1 (+https://rapidapi.com/patoalba2019/api/remotejobsapi)",
 )
 SOURCE_METADATA = {
-    "remoteok": {
-        "url": "https://remoteok.com/api",
-        "website": "https://remoteok.com",
-        "attribution": "Jobs sourced from Remote OK. Keep the original job URL and link back to Remote OK.",
+    "jobicy": {
+        "url": "https://jobicy.com/api/v2/remote-jobs",
+        "website": "https://jobicy.com",
+        "attribution": "Jobs sourced from Jobicy. Keep the original job URL, visibly credit Jobicy, and send users to Jobicy to apply.",
     },
     "himalayas": {
         "url": "https://himalayas.app/jobs/api",
@@ -229,15 +229,18 @@ def source_domain(url: str) -> str | None:
 
 
 def normalize_job(raw_job: dict[str, Any], source: str) -> dict[str, Any] | None:
-    if source == "remoteok":
-        url = raw_job.get("url") or raw_job.get("apply_url") or ""
-        title = strip_html(raw_job.get("position") or raw_job.get("title"))
-        company = strip_html(raw_job.get("company"))
-        description = clean_description(raw_job.get("description"))
-        tags = as_list(raw_job.get("tags"))
-        category = tags[0] if tags else ""
-        location = clean_location(raw_job.get("location"))
-        published_at = parse_timestamp(raw_job.get("date") or raw_job.get("epoch"))
+    if source == "jobicy":
+        url = raw_job.get("url") or ""
+        title = strip_html(raw_job.get("jobTitle"))
+        company = strip_html(raw_job.get("companyName"))
+        description = clean_description(raw_job.get("jobDescription") or raw_job.get("jobExcerpt"))
+        industries = as_list(raw_job.get("jobIndustry"))
+        job_types = as_list(raw_job.get("jobType"))
+        levels = as_list(raw_job.get("jobLevel"))
+        tags = as_list(industries + job_types + levels)
+        category = (industries or ["Remote"])[0]
+        location = clean_location(raw_job.get("jobGeo"))
+        published_at = parse_timestamp(raw_job.get("pubDate"))
         salary = normalize_salary(raw_job)
     elif source == "himalayas":
         url = raw_job.get("applicationLink") or ""
@@ -282,9 +285,9 @@ def normalize_salary(raw_job: dict[str, Any]) -> str | None:
     if salary:
         return salary
 
-    minimum = raw_job.get("salary_min") or raw_job.get("minSalary")
-    maximum = raw_job.get("salary_max") or raw_job.get("maxSalary")
-    currency = strip_html(raw_job.get("currency")) or "USD"
+    minimum = raw_job.get("salary_min") or raw_job.get("minSalary") or raw_job.get("salaryMin")
+    maximum = raw_job.get("salary_max") or raw_job.get("maxSalary") or raw_job.get("salaryMax")
+    currency = strip_html(raw_job.get("currency") or raw_job.get("salaryCurrency")) or "USD"
     if minimum and maximum:
         return f"{currency} {minimum} - {maximum}"
     if minimum:
@@ -319,10 +322,10 @@ def fetch_json(url: str) -> Any:
     return response.json()
 
 
-def fetch_remoteok_jobs() -> list[dict[str, Any]]:
-    payload = fetch_json("https://remoteok.com/api")
-    jobs = payload[1:] if isinstance(payload, list) else []
-    return [job for job in (normalize_job(item, "remoteok") for item in jobs) if job]
+def fetch_jobicy_jobs() -> list[dict[str, Any]]:
+    payload = fetch_json("https://jobicy.com/api/v2/remote-jobs?count=100")
+    jobs = payload.get("jobs", []) if isinstance(payload, dict) else []
+    return [job for job in (normalize_job(item, "jobicy") for item in jobs) if job]
 
 
 def fetch_himalayas_jobs() -> list[dict[str, Any]]:
@@ -339,7 +342,7 @@ def fetch_himalayas_jobs() -> list[dict[str, Any]]:
 
 
 SOURCE_FETCHERS = {
-    "remoteok": fetch_remoteok_jobs,
+    "jobicy": fetch_jobicy_jobs,
     "himalayas": fetch_himalayas_jobs,
 }
 

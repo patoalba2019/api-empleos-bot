@@ -3,7 +3,7 @@ info:
   title: RemoteJobsAPI
   version: 2.1.0
   description: |
-    RemoteJobsAPI provides normalized remote job listings from Remote OK and
+    RemoteJobsAPI provides normalized remote job listings from Jobicy and
     Himalayas. It cleans and deduplicates source data and exposes one consistent
     contract with search, filters, pagination, job detail, stats, source
     metadata, and cache refresh controls.
@@ -106,7 +106,7 @@ paths:
           description: Filter by source feed.
           schema:
             type: string
-            enum: [remoteok, himalayas]
+            enum: [jobicy, himalayas]
           example: himalayas
         - name: limit
           in: query
@@ -277,14 +277,14 @@ components:
           type: array
           items:
             type: string
-          example: [remoteok, himalayas]
+          example: [jobicy, himalayas]
         source_errors:
           type: object
           additionalProperties:
             type: string
         refresh_interval_seconds:
           type: integer
-          example: 21600
+          example: 43200
     Job:
       type: object
       properties:

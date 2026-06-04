@@ -22,7 +22,7 @@ or cache logic themselves.
 
 The production configuration currently uses:
 
-- Remote OK public JSON feed: `https://remoteok.com/api`
+- Jobicy public API: `https://jobicy.com/api/v2/remote-jobs`
 - Himalayas Remote Jobs API: `https://himalayas.app/jobs/api`
 
 Always keep the original `url`, `source`, and `source_domain` fields in consumer
@@ -32,7 +32,9 @@ Both sources require attribution/link-back when their jobs are displayed. The
 API preserves the original application URL and source fields so buyers can meet
 those requirements. Remotive is intentionally not enabled in the commercial
 configuration because its public feed is not the right basis for this paid
-product.
+product. The production refresh interval is intentionally conservative: Jobicy
+asks integrations to fetch only a few times per day, while Himalayas refreshes
+its public data daily.
 
 ## Endpoints
 
@@ -78,7 +80,7 @@ Response shape:
     "version": "2.1.0",
     "updated_at": "2026-06-01T18:30:00+00:00",
     "job_count": 250,
-    "sources": ["remoteok", "himalayas"],
+    "sources": ["jobicy", "himalayas"],
     "total": 12,
     "limit": 10,
     "offset": 0,
@@ -130,11 +132,11 @@ one of:
 | --- | --- | --- |
 | `PORT` | `5000` | Server port |
 | `JOBS_DATABASE_FILE` | `datos_empleos.json` | Persistent cache path |
-| `REFRESH_INTERVAL_SECONDS` | `21600` | Background refresh interval |
+| `REFRESH_INTERVAL_SECONDS` | `43200` | Background refresh interval |
 | `SOURCE_TIMEOUT_SECONDS` | `15` | Per-source HTTP timeout |
 | `MAX_LIMIT` | `100` | Maximum `GET /jobs` page size |
 | `DEFAULT_LIMIT` | `25` | Default `GET /jobs` page size |
-| `ENABLED_SOURCES` | `remoteok,himalayas` | Comma-separated source list |
+| `ENABLED_SOURCES` | `jobicy,himalayas` | Comma-separated source list |
 | `HIMALAYAS_MAX_PAGES` | `5` | Maximum 20-job pages collected per refresh |
 | `REFRESH_ON_STARTUP` | `false` | Start a background refresh on boot; keep false with Gunicorn |
 | `ENABLE_BACKGROUND_REFRESH` | `true` | Enable scheduled refresh loop |

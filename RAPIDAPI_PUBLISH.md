@@ -40,7 +40,7 @@ Use it to power job boards, recruiting dashboards, AI agents, no-code automation
 
 ### What you get
 
-- Fresh remote job listings from Remote OK and Himalayas
+- Fresh cached remote job listings from Jobicy and Himalayas
 - Search across title, company, location, category, tags, and description
 - Filters by company, location, category, tag, and source
 - Pagination with `limit` and `offset`
@@ -152,10 +152,10 @@ REQUIRE_PAID_GATEWAY=true
 PAID_GATEWAY_SECRETS=<rapidapi-secret>,<zyla-secret>,<apimarket-secret>,<apyhub-secret>
 REFRESH_ON_STARTUP=false
 ENABLE_BACKGROUND_REFRESH=true
-REFRESH_INTERVAL_SECONDS=21600
+REFRESH_INTERVAL_SECONDS=43200
 MAX_LIMIT=100
 DEFAULT_LIMIT=25
-ENABLED_SOURCES=remoteok,himalayas
+ENABLED_SOURCES=jobicy,himalayas
 HIMALAYAS_MAX_PAGES=5
 CORS_ORIGINS=*
 ADMIN_REFRESH_TOKEN=<secure-random-token>

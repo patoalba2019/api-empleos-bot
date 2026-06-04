@@ -7,7 +7,7 @@
     "job_count": 0,
     "sources": [],
     "source_errors": {},
-    "refresh_interval_seconds": 21600,
+    "refresh_interval_seconds": 43200,
     "attribution": {}
   }
 }

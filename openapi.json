@@ -3,7 +3,7 @@
   "info": {
     "title": "RemoteJobsAPI",
     "version": "2.1.0",
-    "description": "RemoteJobsAPI provides normalized remote job listings from Remote OK and\nHimalayas. It cleans and deduplicates source data and exposes one consistent\ncontract with search, filters, pagination, job detail, stats, source\nmetadata, and cache refresh controls.\n\nThe API is designed for developers, founders, recruitment tools, job boards,\ndashboards, AI agents, and no-code builders that need fresh remote job data\nwithout maintaining multiple source-specific parsers.\n",
+    "description": "RemoteJobsAPI provides normalized remote job listings from Jobicy and\nHimalayas. It cleans and deduplicates source data and exposes one consistent\ncontract with search, filters, pagination, job detail, stats, source\nmetadata, and cache refresh controls.\n\nThe API is designed for developers, founders, recruitment tools, job boards,\ndashboards, AI agents, and no-code builders that need fresh remote job data\nwithout maintaining multiple source-specific parsers.\n",
     "contact": {
       "name": "patoalba2019",
       "url": "https://rapidapi.com/patoalba2019/api/remotejobsapi"
@@ -153,7 +153,7 @@
             "schema": {
               "type": "string",
               "enum": [
-                "remoteok",
+                "jobicy",
                 "himalayas"
               ]
             },
@@ -434,7 +434,7 @@
               "type": "string"
             },
             "example": [
-              "remoteok",
+              "jobicy",
               "himalayas"
             ]
           },
@@ -446,7 +446,7 @@
           },
           "refresh_interval_seconds": {
             "type": "integer",
-            "example": 21600
+            "example": 43200
           }
         }
       },

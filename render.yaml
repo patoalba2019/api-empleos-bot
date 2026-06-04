@@ -13,7 +13,7 @@ services:
       - key: PAID_GATEWAY_SECRETS
         sync: false
       - key: ENABLED_SOURCES
-        value: remoteok,himalayas
+        value: jobicy,himalayas
       - key: REFRESH_ON_STARTUP
         value: "false"
       - key: ENABLE_BACKGROUND_REFRESH
@@ -21,7 +21,7 @@ services:
       - key: HIMALAYAS_MAX_PAGES
         value: "5"
       - key: REFRESH_INTERVAL_SECONDS
-        value: "21600"
+        value: "43200"
       - key: SOURCE_TIMEOUT_SECONDS
         value: "20"
       - key: DEFAULT_LIMIT

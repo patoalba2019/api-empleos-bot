@@ -11,7 +11,7 @@ class RemoteJobsAPITestCase(unittest.TestCase):
         os.environ["JOBS_DATABASE_FILE"] = f"{self.temp_dir.name}/jobs.json"
         os.environ["REFRESH_ON_STARTUP"] = "false"
         os.environ["ENABLE_BACKGROUND_REFRESH"] = "false"
-        os.environ["ENABLED_SOURCES"] = "remoteok,himalayas"
+        os.environ["ENABLED_SOURCES"] = "jobicy,himalayas"
 
         import server
 
@@ -43,20 +43,22 @@ class RemoteJobsAPITestCase(unittest.TestCase):
             "applicationLink": "https://himalayas.app/jobs/senior-python",
             "pubDate": "2026-06-01T12:00:00Z",
         }
-        remoteok_job = {
-            "position": "React Engineer",
-            "company": "Frontend Labs",
-            "location": "Worldwide",
-            "tags": ["React", "TypeScript"],
-            "description": "Build UI",
-            "url": "https://remoteok.com/remote-jobs/react-engineer",
-            "epoch": 1780315200,
+        jobicy_job = {
+            "jobTitle": "React Engineer",
+            "companyName": "Frontend Labs",
+            "jobGeo": "Worldwide",
+            "jobIndustry": ["Software Engineering"],
+            "jobType": ["Full-Time"],
+            "jobLevel": "Senior",
+            "jobDescription": "Build UI",
+            "url": "https://jobicy.com/jobs/react-engineer",
+            "pubDate": "2026-06-01T12:00:00Z",
         }
 
         with patch.dict(
             self.server.SOURCE_FETCHERS,
             {
-                "remoteok": lambda: [self.server.normalize_job(remoteok_job, "remoteok")],
+                "jobicy": lambda: [self.server.normalize_job(jobicy_job, "jobicy")],
                 "himalayas": lambda: [self.server.normalize_job(himalayas_job, "himalayas")],
             },
         ):
@@ -87,19 +89,19 @@ class RemoteJobsAPITestCase(unittest.TestCase):
         )
 
     def test_health_loads_initial_snapshot_once(self):
-        remoteok_job = self.server.normalize_job(
+        jobicy_job = self.server.normalize_job(
             {
-                "position": "Backend Engineer",
-                "company": "Example",
-                "location": "Worldwide",
-                "url": "https://remoteok.com/remote-jobs/backend-engineer",
-                "epoch": 1780315200,
+                "jobTitle": "Backend Engineer",
+                "companyName": "Example",
+                "jobGeo": "Worldwide",
+                "url": "https://jobicy.com/jobs/backend-engineer",
+                "pubDate": "2026-06-01T12:00:00Z",
             },
-            "remoteok",
+            "jobicy",
         )
         with patch.dict(
             self.server.SOURCE_FETCHERS,
-            {"remoteok": lambda: [remoteok_job], "himalayas": lambda: []},
+            {"jobicy": lambda: [jobicy_job], "himalayas": lambda: []},
         ):
             response = self.client.get("/health")
 
