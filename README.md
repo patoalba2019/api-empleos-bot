@@ -220,3 +220,7 @@ remote jobs, jobs api, hiring, recruitment, developer jobs, latam jobs, work fro
 - **Pro**: USD 9.99/month, 10,000 requests/month.
 - **Ultra**: USD 29/month, 50,000 requests/month.
 - **Mega**: USD 79/month, 200,000 requests/month.
+
+## License
+
+Proprietary software. All rights reserved. See [LICENSE](LICENSE).
