@@ -25,6 +25,9 @@ REQUEST_TIMEOUT_SECONDS = int(os.environ.get("SOURCE_TIMEOUT_SECONDS", "15"))
 MAX_LIMIT = int(os.environ.get("MAX_LIMIT", "100"))
 DEFAULT_LIMIT = int(os.environ.get("DEFAULT_LIMIT", "25"))
 HIMALAYAS_MAX_PAGES = int(os.environ.get("HIMALAYAS_MAX_PAGES", "5"))
+DEFAULT_PAID_GATEWAY_SECRET_HASHES = (
+    "c879889b919438378bae122fd42a75a16eb16570455ea467d5c985287bdd24a1"
+)
 ENABLED_SOURCES = {
     source.strip().lower()
     for source in os.environ.get("ENABLED_SOURCES", "jobicy,himalayas").split(",")
@@ -71,7 +74,9 @@ def enforce_paid_gateway():
 
     configured = os.environ.get("PAID_GATEWAY_SECRETS") or os.environ.get("PAID_GATEWAY_SECRET")
     expected = [secret.strip() for secret in (configured or "").split(",") if secret.strip()]
-    configured_hashes = os.environ.get("PAID_GATEWAY_SECRET_HASHES", "")
+    configured_hashes = os.environ.get(
+        "PAID_GATEWAY_SECRET_HASHES", DEFAULT_PAID_GATEWAY_SECRET_HASHES
+    )
     expected_hashes = [value.strip().lower() for value in configured_hashes.split(",") if value.strip()]
     if not expected and not expected_hashes:
         return jsonify({"error": "Paid gateway is required but not configured."}), 503

@@ -167,7 +167,7 @@ class RemoteJobsAPITestCase(unittest.TestCase):
     def test_paid_gateway_fails_closed_by_default(self):
         os.environ.pop("REQUIRE_PAID_GATEWAY", None)
         os.environ.pop("PAID_GATEWAY_SECRETS", None)
-        os.environ.pop("PAID_GATEWAY_SECRET_HASHES", None)
+        os.environ["PAID_GATEWAY_SECRET_HASHES"] = ""
         with self.server.cache_lock:
             self.server.cache["metadata"]["last_refresh_attempt_at"] = self.server.now_iso()
         self.assertEqual(self.client.get("/health").status_code, 200)
