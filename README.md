@@ -145,6 +145,7 @@ one of:
 | `CORS_ORIGINS` | `*` | CORS origin policy |
 | `REQUIRE_PAID_GATEWAY` | `true` | Require an authorized marketplace secret |
 | `PAID_GATEWAY_SECRETS` | unset | Comma-separated marketplace proxy secrets |
+| `PAID_GATEWAY_SECRET_HASHES` | unset | Comma-separated SHA-256 hashes of authorized marketplace secrets |
 
 ## Production Security
 
@@ -152,6 +153,11 @@ The Render Blueprint enables paid-gateway protection. Only `/health` remains
 public for uptime monitoring. Job data and all other endpoints require a private
 marketplace gateway header, so the direct Render URL is not a free customer
 endpoint.
+
+Production can store only the SHA-256 hash of a marketplace secret in
+`PAID_GATEWAY_SECRET_HASHES`. The marketplace keeps the original secret, while
+the repository and hosting configuration contain only its non-reversible
+fingerprint.
 
 For local development only, explicitly set `REQUIRE_PAID_GATEWAY=false`.
 

@@ -12,6 +12,8 @@ services:
         value: "true"
       - key: PAID_GATEWAY_SECRETS
         sync: false
+      - key: PAID_GATEWAY_SECRET_HASHES
+        value: c879889b919438378bae122fd42a75a16eb16570455ea467d5c985287bdd24a1
       - key: ENABLED_SOURCES
         value: jobicy,himalayas
       - key: REFRESH_ON_STARTUP
