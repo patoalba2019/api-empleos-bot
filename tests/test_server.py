@@ -86,9 +86,31 @@ class RemoteJobsAPITestCase(unittest.TestCase):
             "المدينة",
         )
 
+    def test_health_loads_initial_snapshot_once(self):
+        remoteok_job = self.server.normalize_job(
+            {
+                "position": "Backend Engineer",
+                "company": "Example",
+                "location": "Worldwide",
+                "url": "https://remoteok.com/remote-jobs/backend-engineer",
+                "epoch": 1780315200,
+            },
+            "remoteok",
+        )
+        with patch.dict(
+            self.server.SOURCE_FETCHERS,
+            {"remoteok": lambda: [remoteok_job], "himalayas": lambda: []},
+        ):
+            response = self.client.get("/health")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.get_json()["metadata"]["job_count"], 1)
+
     def test_paid_gateway_blocks_data_but_keeps_health_public(self):
         os.environ["REQUIRE_PAID_GATEWAY"] = "true"
         os.environ["PAID_GATEWAY_SECRETS"] = "market-secret"
+        with self.server.cache_lock:
+            self.server.cache["metadata"]["last_refresh_attempt_at"] = "test"
 
         self.assertEqual(self.client.get("/health").status_code, 200)
         self.assertEqual(self.client.get("/jobs").status_code, 402)

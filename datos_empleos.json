@@ -2,15 +2,12 @@
   "jobs": [],
   "metadata": {
     "api": "RemoteJobsAPI",
-    "version": "2.0.0",
+    "version": "2.1.0",
     "updated_at": null,
     "job_count": 0,
     "sources": [],
     "source_errors": {},
     "refresh_interval_seconds": 21600,
-    "attribution": {
-      "remotive": "https://remotive.com",
-      "remoteok": "https://remoteok.com"
-    }
+    "attribution": {}
   }
 }

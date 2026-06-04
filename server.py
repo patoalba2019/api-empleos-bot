@@ -494,6 +494,13 @@ def background_refresh_loop() -> None:
         time.sleep(REFRESH_INTERVAL_SECONDS)
 
 
+def ensure_initial_snapshot() -> None:
+    with cache_lock:
+        should_refresh = not cache["jobs"] and not cache["metadata"].get("last_refresh_attempt_at")
+    if should_refresh:
+        refresh_jobs()
+
+
 def query_bool(name: str, default: bool = False) -> bool:
     value = request.args.get(name)
     if value is None:
@@ -602,6 +609,7 @@ def home():
 
 @app.get("/health")
 def health():
+    ensure_initial_snapshot()
     with cache_lock:
         metadata = cache["metadata"].copy()
     status = "ok" if metadata.get("job_count", 0) > 0 else "degraded"
@@ -617,8 +625,8 @@ def get_jobs():
         jobs = list(cache["jobs"])
         metadata = cache["metadata"].copy()
 
-    if not jobs and not metadata.get("updated_at"):
-        refresh_jobs()
+    if not jobs and not metadata.get("last_refresh_attempt_at"):
+        ensure_initial_snapshot()
         with cache_lock:
             jobs = list(cache["jobs"])
             metadata = cache["metadata"].copy()
