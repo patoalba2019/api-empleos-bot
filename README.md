@@ -134,7 +134,7 @@ one of:
 | `DEFAULT_LIMIT` | `25` | Default `GET /jobs` page size |
 | `ENABLED_SOURCES` | `remoteok,himalayas` | Comma-separated source list |
 | `HIMALAYAS_MAX_PAGES` | `5` | Maximum 20-job pages collected per refresh |
-| `REFRESH_ON_STARTUP` | `true` | Start a background refresh on boot |
+| `REFRESH_ON_STARTUP` | `false` | Start a background refresh on boot; keep false with Gunicorn |
 | `ENABLE_BACKGROUND_REFRESH` | `true` | Enable scheduled refresh loop |
 | `ADMIN_REFRESH_TOKEN` | unset | Protects `POST /refresh` |
 | `CORS_ORIGINS` | `*` | CORS origin policy |

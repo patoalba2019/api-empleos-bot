@@ -741,7 +741,7 @@ def should_start_background_thread() -> bool:
 
 load_cache()
 
-if os.environ.get("REFRESH_ON_STARTUP", "true").lower() == "true":
+if os.environ.get("REFRESH_ON_STARTUP", "false").lower() == "true":
     threading.Thread(target=refresh_jobs, daemon=True).start()
 
 if should_start_background_thread():

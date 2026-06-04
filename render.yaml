@@ -15,7 +15,7 @@ services:
       - key: ENABLED_SOURCES
         value: remoteok,himalayas
       - key: REFRESH_ON_STARTUP
-        value: "true"
+        value: "false"
       - key: ENABLE_BACKGROUND_REFRESH
         value: "false"
       - key: HIMALAYAS_MAX_PAGES

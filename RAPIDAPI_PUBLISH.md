@@ -144,7 +144,7 @@ Recommended production env vars:
 ```text
 REQUIRE_PAID_GATEWAY=true
 PAID_GATEWAY_SECRETS=<rapidapi-secret>,<zyla-secret>,<apimarket-secret>,<apyhub-secret>
-REFRESH_ON_STARTUP=true
+REFRESH_ON_STARTUP=false
 ENABLE_BACKGROUND_REFRESH=true
 REFRESH_INTERVAL_SECONDS=21600
 MAX_LIMIT=100
