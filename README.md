@@ -1,19 +1,35 @@
 # RemoteJobsAPI
 
+[![Python](https://img.shields.io/badge/Python-3.8%2B-blue.svg)](https://www.python.org/downloads/)
+[![Flask](https://img.shields.io/badge/Flask-2.0%2B-green.svg)](https://flask.palletsprojects.com/)
+[![License](https://img.shields.io/badge/License-Proprietary-red.svg)](LICENSE)
+[![RapidAPI](https://img.shields.io/badge/RapidAPI-Paid-orange.svg)](https://rapidapi.com/patoalba2019/api/remotejobsapi)
+
 ![RemoteJobsAPI logo](assets/remotejobs-api-logo-500.png)
 
+**🚀 Production-ready API for remote job listings with search, filters, and real-time aggregation**
+
 [Subscribe on RapidAPI](https://rapidapi.com/patoalba2019/api/remotejobsapi?utm_source=github&utm_medium=repository&utm_campaign=remotejobs_readme) |
-[View product details](https://patoapis-paid-apis.onrender.com/remote-jobs-api.html?utm_source=github&utm_medium=repository&utm_campaign=remotejobs_readme)
+[View product details](https://patoapis-paid-apis.onrender.com/remote-jobs-api.html?utm_source=github&utm_medium=repository&utm_campaign=remotejobs_readme) |
+[Live Demo](https://patoapis-paid-apis.onrender.com/)
 
 > Commercial API access is paid and delivered through RapidAPI. The direct
 > production backend rejects requests that do not carry the private marketplace
 > gateway credential.
 
-RemoteJobsAPI is a production-ready Flask API that aggregates remote job listings
-from public job-board feeds and exposes them through one clean, normalized
-contract. It is designed for RapidAPI consumers who want fresh remote jobs
-without building source-specific parsers, deduplication, filtering, pagination,
-or cache logic themselves.
+## 🎯 Why RemoteJobsAPI?
+
+**Stop building job scrapers. Start building products.**
+
+RemoteJobsAPI is a production-ready Flask API that aggregates remote job listings from public job-board feeds and exposes them through one clean, normalized contract. It is designed for RapidAPI consumers who want fresh remote jobs without building source-specific parsers, deduplication, filtering, pagination, or cache logic themselves.
+
+**Perfect for:**
+- Job board websites
+- Recruitment platforms
+- Developer job aggregators
+- AI-powered job matching
+- Newsletter job feeds
+- Mobile job applications
 
 ## Why it is useful
 
@@ -25,12 +41,19 @@ or cache logic themselves.
 - Safe refresh behavior with optional admin token protection.
 - Source attribution included for transparent downstream usage.
 
-## Data Sources
+## 📡 Data Sources
 
 The production configuration currently uses:
 
-- Jobicy public API: `https://jobicy.com/api/v2/remote-jobs`
-- Himalayas Remote Jobs API: `https://himalayas.app/jobs/api`
+- **Jobicy**: `https://jobicy.com/api/v2/remote-jobs` - Fresh remote job listings
+- **Himalayas**: `https://himalayas.app/jobs/api` - Curated remote opportunities
+
+**Coming soon:**
+- Remotive integration
+- We Work Remotely integration
+- RemoteOK integration
+
+All sources require proper attribution. The API preserves original URLs and source fields for compliance.
 
 Always keep the original `url`, `source`, and `source_domain` fields in consumer
 apps so users can apply through the original job posting.
@@ -43,34 +66,48 @@ product. The production refresh interval is intentionally conservative: Jobicy
 asks integrations to fetch only a few times per day, while Himalayas refreshes
 its public data daily.
 
-## Endpoints
+## 🛠️ API Endpoints
 
 ### `GET /`
-
 API status, available endpoints, and current cache metadata.
 
-### `GET /health`
+**Response:**
+```json
+{
+  "api": "RemoteJobsAPI",
+  "version": "2.2.0",
+  "endpoints": ["/", "/health", "/jobs", "/stats", "/sources"]
+}
+```
 
-Lightweight health check.
+### `GET /health`
+Lightweight health check for monitoring.
+
+**Response:**
+```json
+{
+  "status": "ok",
+  "timestamp": "2026-06-07T23:00:00Z"
+}
+```
 
 ### `GET /jobs`
+Returns normalized remote jobs with powerful filtering.
 
-Returns normalized remote jobs.
+**Query Parameters:**
 
-Query parameters:
-
-| Name | Description | Example |
-| --- | --- | --- |
-| `q` or `search` | Text search across title, company, location, category, tags, and description | `python` |
+| Parameter | Description | Example |
+|-----------|-------------|---------|
+| `q` or `search` | Full-text search across title, company, location, tags | `python developer` |
 | `company` | Filter by company name | `stripe` |
-| `location` | Filter by candidate location text | `latam` |
-| `category` | Filter by normalized category | `software` |
-| `tag` | Filter by tag/skill | `react` |
-| `source` | Filter by source | `himalayas` |
-| `limit` | Page size, capped by `MAX_LIMIT` | `25` |
-| `offset` | Pagination offset | `50` |
-| `sort` | `newest`, `company`, or `title` | `newest` |
-| `include_description` | Include full text description | `true` |
+| `location` | Filter by location (supports "latam", "worldwide") | `latam` |
+| `category` | Filter by category | `software` |
+| `tag` | Filter by specific skill/technology | `react` |
+| `source` | Filter by data source | `himalayas` |
+| `limit` | Results per page (max 100) | `25` |
+| `offset` | Pagination offset | `0` |
+| `sort` | Sort order: `newest`, `company`, `title` | `newest` |
+| `include_description` | Include full job description | `true` |
 
 Example:
 
@@ -133,7 +170,7 @@ one of:
 - `ALLOW_PUBLIC_REFRESH=true`: allows public refreshes. Not recommended for
   production.
 
-## Environment Variables
+## ⚙️ Configuration
 
 | Name | Default | Description |
 | --- | --- | --- |
@@ -154,78 +191,119 @@ one of:
 | `PAID_GATEWAY_SECRETS` | unset | Comma-separated marketplace proxy secrets |
 | `PAID_GATEWAY_SECRET_HASHES` | unset | Comma-separated SHA-256 hashes of authorized marketplace secrets |
 
-## Production Security
+## 🔒 Security & Production
 
-The Render Blueprint enables paid-gateway protection. Only `/health` remains
-public for uptime monitoring. Job data and all other endpoints require a private
-marketplace gateway header, so the direct Render URL is not a free customer
-endpoint.
+### Paid Gateway Protection
+The API uses marketplace gateway protection to ensure only authorized paying customers access the data:
 
-Production can store only the SHA-256 hash of a marketplace secret in
-`PAID_GATEWAY_SECRET_HASHES`. The marketplace keeps the original secret, while
-the repository and hosting configuration contain only its non-reversible
-fingerprint.
+- Only `/health` endpoint is publicly accessible
+- All job data endpoints require valid marketplace credentials
+- Supports both plaintext secrets and SHA-256 hashes for enhanced security
+- Direct backend access without credentials returns `402 Payment Required`
 
-For local development only, explicitly set `REQUIRE_PAID_GATEWAY=false`.
-
-## Local Development
-
+### Local Development
+For testing without marketplace credentials:
 ```bash
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
+export REQUIRE_PAID_GATEWAY=false
 python server.py
 ```
 
-Then open:
+## 🚀 Quick Start
 
-```text
-http://localhost:5000/jobs?limit=5
-```
-
-## Deployment
-
-Recommended start command:
-
+### Installation
 ```bash
-gunicorn server:app
+# Clone the repository
+git clone https://github.com/patoalba2019/api-empleos-bot.git
+cd api-empleos-bot
+
+# Create virtual environment
+python3 -m venv .venv
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Run the server
+python server.py
 ```
 
-The production Blueprint keeps background loops disabled. `/health` and
-job-reading endpoints refresh a successful snapshot after 12 hours, retry a
-failed refresh after 15 minutes, and continue serving the last successful
-snapshot during temporary source outages.
+### Test the API
+```bash
+# Health check
+curl http://localhost:5000/health
 
-## RapidAPI Listing Copy
+# Get remote jobs
+curl "http://localhost:5000/jobs?limit=10&q=python"
 
-Marketplace logo:
-
-```text
-assets/remotejobs-api-logo-500.png
+# Search by location
+curl "http://localhost:5000/jobs?location=latam&limit=5"
 ```
 
-Short description:
+## 🌐 Deployment
 
-```text
-Normalized remote job listings from public job-board feeds, with search,
-filters, pagination, stats, and source attribution.
+### Render (Recommended)
+```bash
+# Deploy with one click using the Render Blueprint
+# The API is pre-configured for Render with:
+# - Automatic HTTPS
+# - Paid gateway protection
+# - Health monitoring
+# - Auto-scaling
 ```
 
-Long description:
-
-```text
-RemoteJobsAPI gives developers one clean feed of remote jobs aggregated from
-public job-board sources. It normalizes different source formats into one
-contract, deduplicates listings, adds filters for title, company, location,
-category, tags and source, and serves cached data so client apps stay reliable
-even when an upstream source is temporarily unavailable.
+### Docker
+```dockerfile
+FROM python:3.9-slim
+WORKDIR /app
+COPY requirements.txt .
+RUN pip install -r requirements.txt
+COPY . .
+CMD ["gunicorn", "server:app"]
 ```
 
-Suggested tags:
-
-```text
-remote jobs, jobs api, hiring, recruitment, developer jobs, latam jobs, work from home, job search
+### Environment Variables for Production
+```bash
+PORT=5000
+REQUIRE_PAID_GATEWAY=true
+PAID_GATEWAY_SECRET_HASHES=<your-hash>
+ENABLED_SOURCES=jobicy,himalayas
+REFRESH_INTERVAL_SECONDS=43200
 ```
+
+## 📈 Pricing
+
+### RapidAPI Plans
+- **Starter**: $4.99/month - 1,000 requests/month
+- **Pro**: $9.99/month - 10,000 requests/month  
+- **Ultra**: $29/month - 50,000 requests/month
+- **Mega**: $79/month - 200,000 requests/month
+
+[Subscribe on RapidAPI](https://rapidapi.com/patoalba2019/api/remotejobsapi)
+
+## 📊 Use Cases
+
+- **Job Boards**: Power your remote job website with fresh listings
+- **Recruitment Platforms**: Aggregate jobs for your ATS or recruiting tool
+- **Mobile Apps**: Build job search applications
+- **Newsletters**: Create automated job digest emails
+- **AI Agents**: Feed job data to AI-powered job matching systems
+- **Analytics**: Track remote job market trends
+
+## 🤝 Contributing
+
+This is a commercial API product. For feature requests or bug reports, please contact through RapidAPI or open an issue on GitHub.
+
+## 📄 License
+
+Proprietary software. All rights reserved. See [LICENSE](LICENSE).
+Access to the hosted API requires an active paid RapidAPI subscription.
+
+## 🔗 Links
+
+- [RapidAPI Marketplace](https://rapidapi.com/patoalba2019/api/remotejobsapi)
+- [Product Website](https://patoapis-paid-apis.onrender.com/remote-jobs-api.html)
+- [Documentation](https://patoapis-paid-apis.onrender.com/guides/remote-jobs-search.html)
+- [Support](https://rapidapi.com/patoalba2019/api/remotejobsapi/support)
 
 ## Recommended Marketplace Plans
 
@@ -234,7 +312,3 @@ remote jobs, jobs api, hiring, recruitment, developer jobs, latam jobs, work fro
 - **Ultra**: USD 29/month, 50,000 requests/month.
 - **Mega**: USD 79/month, 200,000 requests/month.
 
-## License
-
-Proprietary software. All rights reserved. See [LICENSE](LICENSE).
-Access to the hosted API requires an active paid RapidAPI subscription.
