@@ -165,8 +165,8 @@ Manually refreshes the cache. By default this endpoint is disabled unless you se
 one of:
 
 - `ADMIN_REFRESH_TOKEN`: requires `Authorization: Bearer <token>`.
-- `ALLOW_PUBLIC_REFRESH=true`: allows public refreshes. Not recommended for
-  production.
+- `ALLOW_PUBLIC_REFRESH=true`: local-only testing escape hatch. Do not enable
+  it on production deployments.
 
 ## ⚙️ Configuration
 
@@ -201,11 +201,8 @@ access job data through the configured marketplace flow:
 - Production requests are designed to use marketplace-managed credentials
 
 ### Local Development
-For testing without marketplace credentials:
-```bash
-export REQUIRE_PAID_GATEWAY=false
-python server.py
-```
+Run local development with the same paid-gateway posture used in production.
+Product data examples require a configured marketplace gateway secret.
 
 ## 🚀 Quick Start
 
