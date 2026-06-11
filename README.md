@@ -13,9 +13,8 @@
 [View product details](https://patoapis-paid-apis.onrender.com/remote-jobs-api.html?utm_source=github&utm_medium=repository&utm_campaign=remotejobs_readme) |
 [Live Demo](https://patoapis-paid-apis.onrender.com/)
 
-> Commercial API access is paid and delivered through RapidAPI. The direct
-> production backend rejects requests that do not carry the private marketplace
-> gateway credential.
+> Commercial API access is paid and delivered through RapidAPI with
+> marketplace-managed credentials.
 
 ## 🎯 Why RemoteJobsAPI?
 
@@ -36,8 +35,8 @@ RemoteJobsAPI is a production-ready Flask API that aggregates remote job listing
 - Real remote-job data from public sources.
 - Normalized response shape across multiple job boards.
 - Search, filters, pagination, detail lookup, source metadata, and stats.
-- Persistent cache so the API can keep serving the last successful snapshot if a
-  source is temporarily down.
+- Persistent cache designed to preserve the last successful snapshot during
+  temporary source interruptions.
 - Safe refresh behavior with optional admin token protection.
 - Source attribution included for transparent downstream usage.
 
@@ -60,9 +59,8 @@ apps so users can apply through the original job posting.
 
 Both sources require attribution/link-back when their jobs are displayed. The
 API preserves the original application URL and source fields so buyers can meet
-those requirements. Remotive is intentionally not enabled in the commercial
-configuration because its public feed is not the right basis for this paid
-product. The production refresh interval is intentionally conservative: Jobicy
+those requirements. The commercial source mix focuses on Jobicy and Himalayas
+for stable data and attribution. The production refresh interval is intentionally conservative: Jobicy
 asks integrations to fetch only a few times per day, while Himalayas refreshes
 its public data daily.
 
@@ -194,12 +192,13 @@ one of:
 ## 🔒 Security & Production
 
 ### Paid Gateway Protection
-The API uses marketplace gateway protection to ensure only authorized paying customers access the data:
+The API uses marketplace gateway protection so authorized paying customers can
+access job data through the configured marketplace flow:
 
-- Only `/health` endpoint is publicly accessible
-- All job data endpoints require valid marketplace credentials
-- Supports both plaintext secrets and SHA-256 hashes for enhanced security
-- Direct backend access without credentials returns `402 Payment Required`
+- `/health` is public for uptime monitoring
+- Job data endpoints require valid marketplace credentials
+- Plaintext secrets and SHA-256 hashes are both supported
+- Production requests are designed to use marketplace-managed credentials
 
 ### Local Development
 For testing without marketplace credentials:
@@ -311,4 +310,3 @@ Access to the hosted API requires an active paid RapidAPI subscription.
 - **Pro**: USD 9.99/month, 10,000 requests/month.
 - **Ultra**: USD 29/month, 50,000 requests/month.
 - **Mega**: USD 79/month, 200,000 requests/month.
-
